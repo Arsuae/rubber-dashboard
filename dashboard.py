@@ -41,20 +41,24 @@ st.subheader("📋 จำนวนยางทั้งหมดที่เล�
 total_amount = df_filtered['จำนวนยาง'].sum()
 st.metric("จำนวนยางรวม", f"{total_amount:,.0f}")
 
+# -------------------------------
+# 6. แสดงตารางข้อมูล (คอลัมน์ที่ต้องการเท่านั้น)
+# -------------------------------
 if df_filtered.empty:
     st.warning("⚠️ ไม่มีข้อมูลตามวันที่และสาขาที่เลือก")
 else:
-    st.dataframe(df_filtered)
+    columns_to_show = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
+    st.dataframe(df_filtered[columns_to_show], use_container_width=True)
 
 # -------------------------------
-# 6. สรุปจำนวนยางแยกตามกอง
+# 7. สรุปจำนวนยางแยกตามกอง
 # -------------------------------
 st.subheader("📦 สรุปจำนวนยางแยกตามกอง")
 grouped_by_gong = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
 st.dataframe(grouped_by_gong, use_container_width=True)
 
 # -------------------------------
-# 7. สรุปกราฟจำนวนยางต่อสาขา
+# 8. สรุปกราฟจำนวนยางต่อสาขา
 # -------------------------------
 st.subheader("📊 สรุปจำนวนยางต่อสาขา")
 summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
