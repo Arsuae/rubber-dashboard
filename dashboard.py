@@ -18,7 +18,9 @@ df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนว
 # -----------------------------
 # 2. แปลงค่าวันที่เป็น datetime
 # -----------------------------
-df['วันที่'] = pd.to_datetime(df['วันที่'], errors='coerce')
+df['วันที่'] = pd.to_datetime(df['วันที่'], errors='coerce').dt.normalize()
+today = pd.Timestamp.today().normalize()
+df_today = df[df['วันที่'] == today]
 
 # -----------------------------
 # 3. กรองข้อมูลเฉพาะ "วันนี้"
