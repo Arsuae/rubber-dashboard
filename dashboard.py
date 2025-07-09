@@ -1,67 +1,74 @@
-# dashboard.py
 import streamlit as st
 import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import pytz
+from datetime import datetime
 import plotly.express as px
 
-# Google Sheet CSV URL (ใช้ export เป็น CSV)
-sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
-
-# โหลดข้อมูลจาก Google Sheet
-@st.cache_data(ttl=600)
-def load_data():
-    df = pd.read_csv(sheet_url)
-    df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
-    df['วันที่'] = pd.to_datetime(df['วันที่']).dt.date
-    today_data = df[df['วันที่'] == today]
-    return df.dropna(subset=['วันที่'])
-
-# โหลดข้อมูล
+# ------------------ CONFIG ------------------
 st.set_page_config(page_title="ลิตตาการยาง", layout="wide")
-st.title("💧 ลิตตาการยาง")
-st.markdown("### ข้อมูลยางพาราก่อนถ้วยวันนี้")
 
-df = load_data()
-today = pd.Timestamp.now(tz='Asia/Bangkok').normalize().date()
-df_today = df[df['วันที่'] == today]
+st.markdown("<h1 style='color: #00BFFF;'>💧 ลิตตาการยาง</h1>", unsafe_allow_html=True)
+st.markdown("### 🧾 ข้อมูลยางพาราก้อนถ้วยวันนี้")
 
-# ---------------------- Summary Section ----------------------
-total_today = df_today['จำนวนยาง'].sum()
+# ------------------ TIMEZONE ------------------
+bangkok = pytz.timezone('Asia/Bangkok')
+today = datetime.now(bangkok).date()
 
-st.metric("📊 จำนวนยางวันนี้", f"{total_today:,.0f}")
+# ------------------ GOOGLE SHEET ------------------
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+client = gspread.authorize(credentials)
 
-if df_today.empty:
-    st.warning("⚠️ ไม่มีข้อมูลของวันนี้")
-    st.stop()
+spreadsheet = client.open_by_key("1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU")  # <== เปลี่ยนเป็นของคุณ
+worksheet = spreadsheet.get_worksheet_by_id(2026341208)  # <== gid ของ sheet
 
-# ---------------------- สรุปแยกสาขา ----------------------
-st.markdown("### 🗂 รายชื่อลูกค้าแยกตามสาขา")
-branches = df_today['สาขา'].unique()
-cols = st.columns(len(branches))
+data = worksheet.get_all_values()
+headers = data[0]
+rows = data[1:]
+df = pd.DataFrame(rows, columns=headers)
 
-for i, branch in enumerate(branches):
-    df_branch = df_today[df_today['สาขา'] == branch]
-    total_kg = df_branch['จำนวนยาง'].sum()
-    total_money = df_branch['จำนวนเงิน'].sum()
-    total_customers = df_branch.shape[0]
+# ------------------ CLEAN DATA ------------------
+df = df.replace("", pd.NA).dropna()
+df["จำนวนยาง"] = df["จำนวนยาง"].astype(float)
+df["ราคา"] = df["ราคา"].astype(float)
+df["จำนวนเงิน"] = df["จำนวนเงิน"].str.replace(",", "").astype(float)
+df["วันที่"] = pd.to_datetime(df["วันที่"], dayfirst=False).dt.date
 
-    with cols[i]:
-        st.subheader(f"สาขา {branch}")
-        st.metric("จำนวนยาง", f"{total_kg:,.0f}")
-        st.metric("จำนวนเงิน", f"{total_money:,.0f}")
-        st.metric("รายชื่อ", f"{total_customers}")
+# ------------------ FILTER TODAY ------------------
+today_df = df[df["วันที่"] == today]
 
-# ---------------------- Bar Chart ----------------------
-st.markdown("### 📈 จำนวนยางวันนี้")
-branch_summary = df_today.groupby('สาขา')[['จำนวนยาง']].sum().reset_index()
-fig = px.bar(branch_summary, x='สาขา', y='จำนวนยาง', color='สาขา', text='จำนวนยาง')
-fig.update_layout(showlegend=False, height=400)
+# ------------------ DISPLAY ------------------
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    st.metric("📊 จำนวนยางวันนี้", f"{int(today_df['จำนวนยาง'].sum()):,}")
+    if today_df.empty:
+        st.warning("⚠️ ไม่มีข้อมูลของวันนี้")
+
+# ------------------ SUMMARY BY BRANCH ------------------
+branch_summary = today_df.groupby("สาขา").agg({
+    "จำนวนยาง": "sum",
+    "จำนวนเงิน": "sum",
+    "ชื่อลูกค้า": "count"
+}).rename(columns={"ชื่อลูกค้า": "รายชื่อ"}).reset_index()
+
+with col2:
+    st.markdown("### 🔎 สรุปตามสาขา")
+    st.dataframe(branch_summary, use_container_width=True)
+
+# ------------------ CHART ------------------
+fig = px.bar(branch_summary, x="สาขา", y="จำนวนยาง", color="สาขา",
+             title="📈 จำนวนยางตามสาขาวันนี้", text_auto=True)
 st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------- ตารางรายชื่อลูกค้า ----------------------
-st.markdown("### 📋 รายชื่อลูกค้าแต่ละสาขา")
-branch_tabs = st.tabs(branches)
-for i, branch in enumerate(branches):
-    df_branch = df_today[df_today['สาขา'] == branch][['ชื่อลูกค้า', 'จำนวนยาง', 'ราคา']]
-    df_branch = df_branch.sort_values(by='จำนวนยาง', ascending=False).reset_index(drop=True)
-    df_branch.index += 1
-    branch_tabs[i].dataframe(df_branch, use_container_width=True, hide_index=False)
+# ------------------ CUSTOMER TABLE ------------------
+st.markdown("### 📋 รายชื่อลูกค้าแยกตามสาขา")
+
+branches = today_df["สาขา"].unique()
+for b in branches:
+    sub = today_df[today_df["สาขา"] == b][["ชื่อลูกค้า", "จำนวนยาง", "ราคา"]].reset_index(drop=True)
+    sub.index += 1
+    st.markdown(f"#### 🏠 {b}")
+    st.dataframe(sub, use_container_width=True)
