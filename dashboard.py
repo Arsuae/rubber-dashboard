@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 
 # ลิงก์ดึงข้อมูลจากชีตชื่อ "หน้าหลัก"
-sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/gviz/tq?tqx=out:csv&sheet=หน้าหลัก"
+sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=XXXXXXX"
+
 df = pd.read_csv(sheet_url)
 
 # แสดงข้อมูลทั้งหมด (debug ชั่วคราว)
