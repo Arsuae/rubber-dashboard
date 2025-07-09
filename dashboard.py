@@ -16,16 +16,13 @@ df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนว
 df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
 
 # -------------------------------
-# 3. ส่วน UI หน้าเว็บ
+# 3. UI หน้าเว็บ
 # -------------------------------
 st.set_page_config(page_title="ลิตตาการยาง", layout="wide")
 st.title("💧 ลิตตาการยาง")
 st.header("ข้อมูลยางพาราก่อนถ้วยวันนี้")
 
-# เลือกวันที่
 selected_date = st.date_input("เลือกวันที่", pd.Timestamp.today())
-
-# เลือกหลายสาขา
 branches = df['สาขา'].dropna().unique().tolist()
 selected_branches = st.multiselect("เลือกสาขา", branches, default=branches)
 
@@ -38,9 +35,9 @@ df_filtered = df[
 ]
 
 # -------------------------------
-# 5. แสดงผลรวมและตาราง
+# 5. สรุปจำนวนยางรวม
 # -------------------------------
-st.subheader("🧾 จำนวนยางทั้งหมดที่เลือก")
+st.subheader("📋 จำนวนยางทั้งหมดที่เลือก")
 total_amount = df_filtered['จำนวนยาง'].sum()
 st.metric("จำนวนยางรวม", f"{total_amount:,.0f}")
 
@@ -50,7 +47,14 @@ else:
     st.dataframe(df_filtered)
 
 # -------------------------------
-# (Optional) สรุปต่อสาขาเป็นกราฟ
+# 6. สรุปจำนวนยางแยกตามกอง
+# -------------------------------
+st.subheader("📦 สรุปจำนวนยางแยกตามกอง")
+grouped_by_gong = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
+st.dataframe(grouped_by_gong, use_container_width=True)
+
+# -------------------------------
+# 7. สรุปกราฟจำนวนยางต่อสาขา
 # -------------------------------
 st.subheader("📊 สรุปจำนวนยางต่อสาขา")
 summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
