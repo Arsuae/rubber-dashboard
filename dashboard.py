@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # ลิงก์ Google Sheet (CSV export) ต้องเปิดสิทธิ์ดูได้
-sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
+sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/edit?gid=2026341208#gid=2026341208"
 
 # อ่านโดยไม่ใช้แถวแรกเป็นหัวตาราง
 df = pd.read_csv(sheet_url, header=None)
