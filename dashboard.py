@@ -44,7 +44,9 @@ st.metric("จำนวนยางรวม", f"{total_amount:,.0f}")
 if df_filtered.empty:
     st.warning("⚠️ ไม่มีข้อมูลตามวันที่และสาขาที่เลือก")
 else:
-    st.dataframe(df_filtered)
+# แสดงเฉพาะคอลัมน์ที่ต้องการ
+columns_to_show = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
+st.dataframe(df_filtered[columns_to_show], use_container_width=True)
 
 # -------------------------------
 # 6. สรุปจำนวนยางแยกตามกอง
