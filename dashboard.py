@@ -11,7 +11,8 @@ sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoK
 def load_data():
     df = pd.read_csv(sheet_url)
     df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
-    df['วันที่'] = pd.to_datetime(df['วันที่'], errors='coerce').dt.normalize()
+    df['วันที่'] = pd.to_datetime(df['วันที่']).dt.date
+    today_data = df[df['วันที่'] == today]
     return df.dropna(subset=['วันที่'])
 
 # โหลดข้อมูล
@@ -20,7 +21,7 @@ st.title("💧 ลิตตาการยาง")
 st.markdown("### ข้อมูลยางพาราก่อนถ้วยวันนี้")
 
 df = load_data()
-today = pd.Timestamp.today().normalize()
+today = pd.Timestamp.now(tz='Asia/Bangkok').normalize().date()
 df_today = df[df['วันที่'] == today]
 
 # ---------------------- Summary Section ----------------------
