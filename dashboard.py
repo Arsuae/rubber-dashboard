@@ -1,62 +1,46 @@
 import streamlit as st
 import pandas as pd
 
-# -------------------------------
-# 1. โหลดข้อมูลจาก Google Sheets
-# -------------------------------
+st.set_page_config(page_title="ลิตตาการยาง", page_icon="💧", layout="wide")
+
+# โหลดข้อมูลจาก Google Sheets (ต้องตั้งค่าสาธารณะให้ export ได้)
 sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
 df = pd.read_csv(sheet_url, header=None)
-
-# ตั้งชื่อคอลัมน์
 df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
 
-# -------------------------------
-# 2. แปลงคอลัมน์วันที่ให้เป็น datetime
-# -------------------------------
-df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
+# แปลงวันที่
+df['วันที่'] = pd.to_datetime(df['วันที่'], errors='coerce')
 
-# -------------------------------
-# 3. UI หน้าเว็บ
-# -------------------------------
-st.set_page_config(page_title="ลิตตาการยาง", layout="wide")
+# ส่วนหัว
 st.title("💧 ลิตตาการยาง")
-st.header("ข้อมูลยางพาราก้อนถ้วยวันนี้")
+st.markdown("## ข้อมูลยางพาราก่อนถ้วยวันนี้")
 
+# เลือกวันที่
 selected_date = st.date_input("เลือกวันที่", pd.Timestamp.today())
+
+# เลือกสาขา
 branches = df['สาขา'].dropna().unique().tolist()
-selected_branches = st.multiselect("เลือกสาขา", branches, default=branches)
+selected_branches = st.multiselect("เลือกสาขา", options=branches, default=branches)
 
-# -------------------------------
-# 4. กรองข้อมูลตามวันที่และสาขา
-# -------------------------------
-df_filtered = df[
-    (df['วันที่'].dt.date == selected_date) &
-    (df['สาขา'].isin(selected_branches))
-]
+# กรองข้อมูล
+df_filtered = df[(df['วันที่'].dt.date == selected_date) & (df['สาขา'].isin(selected_branches))]
 
-# -------------------------------
-# 5. สรุปจำนวนยางรวม
-# -------------------------------
+# แสดงจำนวนรวม
 st.subheader("📋 จำนวนยางทั้งหมดที่เลือก")
-total_amount = df_filtered['จำนวนยาง'].sum()
-st.metric("จำนวนยางรวม", f"{total_amount:,.0f}")
+total_rubber = df_filtered['จำนวนยาง'].sum()
+st.metric(label="จำนวนยางรวม", value=f"{total_rubber:,.0f}")
 
+# รวมตามกอง
+st.markdown("### 🧮 รวมตามกอง")
+group_sum = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
+
+for k in ['กอง1', 'กอง2', 'กอง3']:
+    amount = group_sum[group_sum['กอง'] == k]['จำนวนยาง'].sum()
+    st.write(f"- **{k}**: {amount:,.0f} กิโล")
+
+# แสดงตารางเฉพาะคอลัมน์
 if df_filtered.empty:
     st.warning("⚠️ ไม่มีข้อมูลตามวันที่และสาขาที่เลือก")
 else:
-    st.dataframe(df_filtered)
-
-# -------------------------------
-# 6. สรุปจำนวนยางแยกตามกอง
-# -------------------------------
-st.subheader("📦 สรุปจำนวนยางแยกตามกอง")
-grouped_by_gong = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
-st.dataframe(grouped_by_gong, use_container_width=True)
-
-# -------------------------------
-# 7. สรุปกราฟจำนวนยางต่อสาขา
-# -------------------------------
-st.subheader("📊 สรุปจำนวนยางต่อสาขา")
-summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-if not summary.empty:
-    st.bar_chart(data=summary, x='สาขา', y='จำนวนยาง')
+    show_cols = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
+    st.dataframe(df_filtered[show_cols], use_container_width=True)
