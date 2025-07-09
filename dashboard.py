@@ -1,32 +1,30 @@
 import streamlit as st
 import pandas as pd
 
-# ลิงก์ Google Sheet (CSV export) ต้องเปิดสิทธิ์ดูได้
-sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/edit?gid=2026341208#gid=2026341208"
+# ลิงก์ข้อมูล CSV จาก Google Sheets ชีตชื่อ streamlit-data (gid = 2026341208)
+sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
 
-# อ่านโดยไม่ใช้แถวแรกเป็นหัวตาราง
-df = pd.read_csv(sheet_url, header=None)
-
-# ตั้งชื่อคอลัมน์เอง
-df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
+# อ่านข้อมูล โดยใช้แถวที่ 2 ของชีตเป็น header (เพราะแถวแรกมีสูตร REF!)
+df = pd.read_csv(sheet_url, header=1)
 
 # แสดงข้อมูลทั้งหมด
-st.subheader("📋 ข้อมูลทั้งหมด")
-st.write(df)
+st.subheader("🧾 ข้อมูลทั้งหมด")
+st.dataframe(df)
 
-# แปลงคอลัมน์วันที่
+# แปลงคอลัมน์วันที่ให้เป็น datetime
 df['วันที่'] = pd.to_datetime(df['วันที่'], errors='coerce')
 
-# กรองเฉพาะวันนี้
+# กรองเฉพาะข้อมูลของวันที่วันนี้
 today = pd.Timestamp.today().normalize()
 df_today = df[df['วันที่'] == today]
 
+# แสดงข้อมูลวันนี้
 st.subheader("📅 ข้อมูลของวันนี้")
-st.write(df_today)
+st.dataframe(df_today)
 
-# รวมจำนวนยางต่อสาขา
+# สรุปจำนวนยางรวมต่อสาขา
 summary = df_today.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
 
-# แสดงกราฟ
+# แสดงกราฟแท่ง
 st.title("📊 สรุปจำนวนยางแต่ละสาขา (วันนี้)")
 st.bar_chart(data=summary, x='สาขา', y='จำนวนยาง')
