@@ -231,32 +231,45 @@ else:
     col1, col2 = st.columns(2)
     with col1:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("#### 📊 จำนวนยางตามสาขา")
+        st.markdown("#### <span style='font-size:1.2em;font-weight:700;color:#324177;'>📊 จำนวนยางตามสาขา</span>", unsafe_allow_html=True)
         branch_summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
         if not branch_summary.empty:
+            # -- สีสดใสและอ่านง่าย --
             fig_branch = px.bar(
                 branch_summary,
                 x='สาขา',
                 y='จำนวนยาง',
-                color='จำนวนยาง',
-                color_continuous_scale='Blues',
+                color='สาขา',  # ให้แต่ละสาขาเป็นคนละสี
+                color_discrete_sequence=px.colors.qualitative.Set2,  # ใช้ Set2 สีสดใส
                 text='จำนวนยาง',
                 height=350,
+            )
+            fig_branch.update_traces(
+                texttemplate='%{text:.1f}',
+                textposition='outside',
+                marker_line_color='#324177',
+                marker_line_width=1.5
             )
             fig_branch.update_layout(
                 showlegend=False,
                 plot_bgcolor='#fff',
                 paper_bgcolor='#fff',
-                font=dict(size=13, family="Sarabun,sans-serif"),
+                font=dict(size=15, color='#1a1a1a', family="Sarabun,sans-serif"),
+                yaxis=dict(
+                    gridcolor='#e3eaf8',
+                    zerolinecolor='#ccc'
+                ),
+                xaxis=dict(
+                    tickfont=dict(size=13, color='#324177')
+                ),
                 margin=dict(l=12, r=12, t=30, b=10)
             )
-            fig_branch.update_traces(texttemplate='%{text:.1f}', textposition='outside')
             st.plotly_chart(fig_branch, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("#### 💰 สัดส่วนรายได้แต่ละสาขา")
+        st.markdown("#### <span style='font-size:1.2em;font-weight:700;color:#324177;'>💰 สัดส่วนรายได้แต่ละสาขา</span>", unsafe_allow_html=True)
         money_summary = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
         if not money_summary.empty:
             fig_money = px.pie(
@@ -264,13 +277,13 @@ else:
                 values='จำนวนเงิน',
                 names='สาขา',
                 hole=0.55,
-                color_discrete_sequence=px.colors.sequential.Blues_r,
+                color_discrete_sequence=px.colors.qualitative.Set2,
                 height=350,
             )
             fig_money.update_layout(
                 plot_bgcolor='#fff',
                 paper_bgcolor='#fff',
-                font=dict(size=13, family="Sarabun,sans-serif"),
+                font=dict(size=15, color='#1a1a1a', family="Sarabun,sans-serif"),
                 margin=dict(l=12, r=12, t=30, b=10)
             )
             fig_money.update_traces(textposition='inside', textinfo='percent+label')
