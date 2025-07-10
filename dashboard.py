@@ -254,18 +254,6 @@ else:
     # ========================================================================================
     # BRANCH STATISTICS - MOVED BELOW CHARTS
     # ========================================================================================
-    
-            if i == 0:  # Show total only once
-            with col4:
-                st.markdown(f"""
-                <div style="background: #dc3545; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                    <div style="font-size: 12px;">รวมทั้งหมดวันนี้</div>
-                    <div style="font-size: 18px; font-weight: bold;">
-                        {total_rubber_today:,.1f} กก.<br>
-                        ฿{total_money_today:,.0f}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
 
     # Display branch statistics in cards
     for i, row in branch_stats.iterrows():
@@ -295,6 +283,19 @@ else:
                 <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
             </div>
             """, unsafe_allow_html=True)
+
+                if i == 0:  # Show total only once
+            with col4:
+                st.markdown(f"""
+                <div style="background: #dc3545; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                    <div style="font-size: 12px;">รวมทั้งหมดวันนี้</div>
+                    <div style="font-size: 18px; font-weight: bold;">
+                        {total_rubber_today:,.1f} กก.<br>
+                        ฿{total_money_today:,.0f}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
         
     # ========================================================================================
     # 📋 DATA TABLES SECTION
