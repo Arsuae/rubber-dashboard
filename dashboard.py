@@ -9,7 +9,7 @@ from datetime import datetime, date
 # ========================================================================================
 
 st.set_page_config(
-    page_title="ลิตตาการยาง Dashboard",
+    page_title="ลิตาการยาง Dashboard",
     page_icon="🌳",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -114,12 +114,6 @@ def load_data():
         df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
         df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
         
-        # Debug: Show data types and sample values
-        st.sidebar.write("Debug Info:")
-        st.sidebar.write(f"Total rows: {len(df)}")
-        st.sidebar.write(f"จำนวนเงิน sum: {df['จำนวนเงิน'].sum():,.2f}")
-        st.sidebar.write(f"จำนวนเงิน type: {df['จำนวนเงิน'].dtype}")
-        
         return df
     except Exception as e:
         st.error(f"❌ ไม่สามารถโหลดข้อมูลได้: {str(e)}")
@@ -129,12 +123,12 @@ def load_data():
 # 🎨 HEADER SECTION - MOVED UP
 # ========================================================================================
 
-st.markdown('<div class="company-title">ลิตตาการยาง</div>', unsafe_allow_html=True)
+st.markdown('<div class="company-title">ลิตาการยาง</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="main-header">
-    <h1>สถิติการยาง</h1>
-    <p>ข้อมูลสำคัญการค้อนด้วยวันนี้</p>
+    <h1>ลิตาการยาง</h1>
+    <p>ข้อมูลยางพาราวันนี้</p>
 </div>
 """, unsafe_allow_html=True)
 
