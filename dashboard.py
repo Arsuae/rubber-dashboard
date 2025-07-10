@@ -19,7 +19,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(90deg, #4472C4 0%, #5B9BD5 100%);
         padding: 2rem;
         border-radius: 10px;
         text-align: center;
@@ -28,12 +28,29 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
+    .branch-section {
+        background: #2F3349;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        color: white;
+    }
+    
+    .stats-card {
+        background: #6c757d;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        color: white;
+        margin: 0.5rem 0;
+    }
+    
     .metric-card {
         background: white;
         padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #1e3c72;
+        border-left: 4px solid #4472C4;
         margin: 1rem 0;
     }
     
@@ -99,8 +116,8 @@ def load_data():
 
 st.markdown("""
 <div class="main-header">
-    <h1>🌳 ลิตตาการยาง Dashboard</h1>
-    <p>ระบบติดตาม และจัดการข้อมูลยางพาราก้อนถ้วย</p>
+    <h1>สถิติการยาง</h1>
+    <p>ข้อมูลสำคัญการค้อนด้วยวันนี้</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -163,44 +180,55 @@ if df_filtered.empty:
     </div>
     """, unsafe_allow_html=True)
 else:
-    # Summary metrics
-    col1, col2, col3, col4 = st.columns(4)
+    # Summary statistics by branch
+    st.markdown("## สถิติการยาง")
+    st.markdown("### ข้อมูลสำคัญการค้อนด้วยวันนี้")
     
-    with col1:
-        total_rubber = df_filtered['จำนวนยาง'].sum()
-        st.metric(
-            label="🌳 จำนวนยางรวม",
-            value=f"{total_rubber:,.2f}",
-            delta=None,
-            help="จำนวนยางทั้งหมดในวันที่เลือก"
-        )
+    # Calculate statistics for each branch
+    branch_stats = df_filtered.groupby('สาขา').agg({
+        'จำนวนยาง': 'sum',
+        'จำนวนเงิน': 'sum',
+        'ชื่อลูกค้า': 'count'
+    }).reset_index()
     
-    with col2:
-        total_revenue = df_filtered['จำนวนเงิน'].sum()
-        st.metric(
-            label="💰 รายได้รวม",
-            value=f"฿{total_revenue:,.2f}",
-            delta=None,
-            help="รายได้รวมทั้งหมดในวันที่เลือก"
-        )
-    
-    with col3:
-        avg_price = df_filtered['ราคา'].mean() if len(df_filtered) > 0 else 0
-        st.metric(
-            label="📊 ราคาเฉลี่ย",
-            value=f"฿{avg_price:,.2f}",
-            delta=None,
-            help="ราคาเฉลี่ยต่อหน่วย"
-        )
-    
-    with col4:
-        total_customers = df_filtered['ชื่อลูกค้า'].nunique()
-        st.metric(
-            label="👥 จำนวนลูกค้า",
-            value=f"{total_customers}",
-            delta=None,
-            help="จำนวนลูกค้าทั้งหมด"
-        )
+    # Display branch statistics in cards
+    for _, row in branch_stats.iterrows():
+        st.markdown(f"#### สาขา {row['สาขา']}")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนยาง</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนเงิน</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนเงิน']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">รายชื่อ</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            total_all_branches = branch_stats['จำนวนยาง'].sum()
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนยางวันนี้</div>
+                <div style="font-size: 24px; font-weight: bold;">{total_all_branches:,.1f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            break  # Only show total once
 
     # ========================================================================================
     # 📊 CHARTS SECTION
