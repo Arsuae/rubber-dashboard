@@ -191,10 +191,7 @@ if df_filtered.empty:
     </div>
     """, unsafe_allow_html=True)
 else:
-    # Summary statistics by branch
-    st.markdown("## สถิติการยาง")
-    st.markdown("### ข้อมูลสำคัญการค้อนด้วยวันนี้")
-    
+
     # Calculate statistics for each branch
     branch_stats = df_filtered.groupby('สาขา').agg({
         'จำนวนยาง': 'sum',
