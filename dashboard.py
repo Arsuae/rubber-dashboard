@@ -80,6 +80,15 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin: 1rem 0;
     }
+    
+    .company-title {
+        text-align: center;
+        font-size: 48px;
+        font-weight: bold;
+        color: #4472C4;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -109,7 +118,20 @@ def load_data():
     except Exception as e:
         st.error(f"❌ ไม่สามารถโหลดข้อมูลได้: {str(e)}")
         return pd.DataFrame()
-        
+
+# ========================================================================================
+# 🎨 HEADER SECTION - MOVED UP
+# ========================================================================================
+
+st.markdown('<div class="company-title">ลิตตาการยาง</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="main-header">
+    <h1>สถิติการยาง</h1>
+    <p>ข้อมูลสำคัญการค้อนด้วยวันนี้</p>
+</div>
+""", unsafe_allow_html=True)
+
 # ========================================================================================
 # 📊 SIDEBAR CONTROLS
 # ========================================================================================
@@ -170,8 +192,8 @@ if df_filtered.empty:
     """, unsafe_allow_html=True)
 else:
     # Summary statistics by branch
-    st.markdown("## ลิตาการยาง")
-    st.markdown("### ข้อมูลยางก้อนถ้วยวันนี้")
+    st.markdown("## สถิติการยาง")
+    st.markdown("### ข้อมูลสำคัญการค้อนด้วยวันนี้")
     
     # Calculate statistics for each branch
     branch_stats = df_filtered.groupby('สาขา').agg({
@@ -180,50 +202,12 @@ else:
         'ชื่อลูกค้า': 'count'
     }).reset_index()
     
-    # Display branch statistics in cards
-    for _, row in branch_stats.iterrows():
-        st.markdown(f"#### สาขา {row['สาขา']}")
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">จำนวนยาง</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.0f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">จำนวนเงิน</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนเงิน']:,.0f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">รายชื่อ</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col4:
-            total_all_branches = branch_stats['จำนวนยาง'].sum()
-            st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">จำนวนยางวันนี้</div>
-                <div style="font-size: 24px; font-weight: bold;">{total_all_branches:,.1f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            break  # Only show total once
-
-    # ========================================================================================
-    # 📊 CHARTS SECTION
-    # ========================================================================================
+    # Calculate total rubber for today
+    total_rubber_today = df_filtered['จำนวนยาง'].sum()
     
-    st.markdown("---")
+    # ========================================================================================
+    # 📊 CHARTS SECTION - MOVED UP
+    # ========================================================================================
     
     # Charts row
     col1, col2 = st.columns(2)
@@ -270,6 +254,48 @@ else:
             )
             fig_gong.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig_gong, use_container_width=True)
+
+    # ========================================================================================
+    # BRANCH STATISTICS - MOVED BELOW CHARTS
+    # ========================================================================================
+    
+    # Display branch statistics in cards
+    for _, row in branch_stats.iterrows():
+        st.markdown(f"#### สาขา {row['สาขา']}")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนยางวันนี้</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนเงิน</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนเงิน']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">รายชื่อ</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนยางวันนี้รวม</div>
+                <div style="font-size: 24px; font-weight: bold;">{total_rubber_today:,.1f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            break  # Only show total once
 
     # ========================================================================================
     # 📋 DATA TABLES SECTION
@@ -377,6 +403,6 @@ else:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 1rem;">
-    <p>📊 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+    <p>📊 ลิตตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
 </div>
 """.format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), unsafe_allow_html=True)
