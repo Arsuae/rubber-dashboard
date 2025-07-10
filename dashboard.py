@@ -19,8 +19,8 @@ df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%
 # 3. UI หน้าเว็บ
 # -------------------------------
 st.set_page_config(page_title="ลิตตาการยาง", layout="wide")
-st.title("💧 ลิตตาการยาง")
-st.header("ข้อมูลยางพาราก่อนถ้วยวันนี้")
+st.title("💧 ลิตาการยาง")
+st.header("ข้อมูลยางพาราก้อนถ้วยวันนี้")
 
 selected_date = st.date_input("เลือกวันที่", pd.Timestamp.today())
 branches = df['สาขา'].dropna().unique().tolist()
