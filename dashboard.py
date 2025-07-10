@@ -89,6 +89,16 @@ st.markdown("""
         margin-bottom: 1rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
+    
+    .total-summary {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -120,7 +130,7 @@ def load_data():
         return pd.DataFrame()
 
 # ========================================================================================
-# 🎨 HEADER SECTION - MOVED UP
+# 🎨 HEADER SECTION
 # ========================================================================================
 
 st.markdown("""
@@ -189,7 +199,6 @@ if df_filtered.empty:
     </div>
     """, unsafe_allow_html=True)
 else:
-
     # Calculate statistics for each branch
     branch_stats = df_filtered.groupby('สาขา').agg({
         'จำนวนยาง': 'sum',
@@ -200,9 +209,34 @@ else:
     # Calculate totals for today
     total_rubber_today = df_filtered['จำนวนยาง'].sum()
     total_money_today = df_filtered['จำนวนเงิน'].sum()
+    total_customers_today = df_filtered['ชื่อลูกค้า'].count()
     
     # ========================================================================================
-    # 📊 CHARTS SECTION - MOVED UP
+    # 📊 TOTAL SUMMARY SECTION
+    # ========================================================================================
+    
+    st.markdown(f"""
+    <div class="total-summary">
+        <h2>📊 สรุปรวมวันนี้</h2>
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem;">
+            <div>
+                <div style="font-size: 14px; opacity: 0.9;">จำนวนยางรวม</div>
+                <div style="font-size: 28px; font-weight: bold;">{total_rubber_today:,.1f} กก.</div>
+            </div>
+            <div>
+                <div style="font-size: 14px; opacity: 0.9;">รายได้รวม</div>
+                <div style="font-size: 28px; font-weight: bold;">฿{total_money_today:,.0f}</div>
+            </div>
+            <div>
+                <div style="font-size: 14px; opacity: 0.9;">จำนวนลูกค้า</div>
+                <div style="font-size: 28px; font-weight: bold;">{total_customers_today:,.0f} ราย</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ========================================================================================
+    # 📊 CHARTS SECTION
     # ========================================================================================
     
     # Charts row
@@ -252,19 +286,21 @@ else:
             st.plotly_chart(fig_money, use_container_width=True)
 
     # ========================================================================================
-    # BRANCH STATISTICS - MOVED BELOW CHARTS
+    # BRANCH STATISTICS SECTION
     # ========================================================================================
 
+    st.markdown("#### 🏢 สถิติแยกตามสาขา")
+    
     # Display branch statistics in cards
     for i, row in branch_stats.iterrows():
-        st.markdown(f"#### สาขา {row['สาขา']}")
-        col1, col2, col3, col4 = st.columns(4)
+        st.markdown(f"##### สาขา {row['สาขา']}")
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown(f"""
             <div style="background: #28a745; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
                 <div style="font-size: 12px;">จำนวนยาง</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.1f}</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.1f} กก.</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -280,22 +316,11 @@ else:
             st.markdown(f"""
             <div style="background: #ffc107; padding: 1rem; border-radius: 8px; text-align: center; color: black;">
                 <div style="font-size: 12px;">จำนวนรายการ</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f} ราย</div>
             </div>
             """, unsafe_allow_html=True)
-
-                if i == 0:  # Show total only once
-            with col4:
-                st.markdown(f"""
-                <div style="background: #dc3545; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                    <div style="font-size: 12px;">รวมทั้งหมดวันนี้</div>
-                    <div style="font-size: 18px; font-weight: bold;">
-                        {total_rubber_today:,.1f} กก.<br>
-                        ฿{total_money_today:,.0f}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
+        
+        st.markdown("---")
         
     # ========================================================================================
     # 📋 DATA TABLES SECTION
@@ -403,6 +428,6 @@ else:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 1rem;">
-    <p>📊 ลิตตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+    <p>📊 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
 </div>
 """.format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), unsafe_allow_html=True)
