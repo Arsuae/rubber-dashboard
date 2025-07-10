@@ -109,10 +109,16 @@ def load_data():
         # Convert date column
         df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
         
-        # Clean numeric columns
-        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'], errors='coerce').fillna(0)
-        df['ราคา'] = pd.to_numeric(df['ราคา'], errors='coerce').fillna(0)
-        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'], errors='coerce').fillna(0)
+        # Clean numeric columns with more robust conversion
+        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        
+        # Debug: Show data types and sample values
+        st.sidebar.write("Debug Info:")
+        st.sidebar.write(f"Total rows: {len(df)}")
+        st.sidebar.write(f"จำนวนเงิน sum: {df['จำนวนเงิน'].sum():,.2f}")
+        st.sidebar.write(f"จำนวนเงิน type: {df['จำนวนเงิน'].dtype}")
         
         return df
     except Exception as e:
@@ -202,8 +208,9 @@ else:
         'ชื่อลูกค้า': 'count'
     }).reset_index()
     
-    # Calculate total rubber for today
+    # Calculate totals for today
     total_rubber_today = df_filtered['จำนวนยาง'].sum()
+    total_money_today = df_filtered['จำนวนเงิน'].sum()
     
     # ========================================================================================
     # 📊 CHARTS SECTION - MOVED UP
@@ -236,66 +243,69 @@ else:
             st.plotly_chart(fig_branch, use_container_width=True)
     
     with col2:
-        st.markdown("#### 📦 จำนวนยางตามกอง")
-        gong_summary = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
+        st.markdown("#### 💰 จำนวนเงินตามสาขา")
+        money_summary = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
         
-        if not gong_summary.empty:
-            fig_gong = px.pie(
-                gong_summary,
-                values='จำนวนยาง',
-                names='กอง',
-                title="สัดส่วนจำนวนยางตามกอง",
+        if not money_summary.empty:
+            fig_money = px.pie(
+                money_summary,
+                values='จำนวนเงิน',
+                names='สาขา',
+                title="สัดส่วนรายได้ตามสาขา",
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
-            fig_gong.update_layout(
+            fig_money.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(size=12)
             )
-            fig_gong.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_gong, use_container_width=True)
+            fig_money.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_money, use_container_width=True)
 
     # ========================================================================================
     # BRANCH STATISTICS - MOVED BELOW CHARTS
     # ========================================================================================
     
     # Display branch statistics in cards
-    for _, row in branch_stats.iterrows():
+    for i, row in branch_stats.iterrows():
         st.markdown(f"#### สาขา {row['สาขา']}")
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">จำนวนยางวันนี้</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.0f}</div>
+            <div style="background: #28a745; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                <div style="font-size: 12px;">จำนวนยาง</div>
+                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนยาง']:,.1f}</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+            <div style="background: #17a2b8; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
                 <div style="font-size: 12px;">จำนวนเงิน</div>
-                <div style="font-size: 24px; font-weight: bold;">{row['จำนวนเงิน']:,.0f}</div>
+                <div style="font-size: 24px; font-weight: bold;">฿{row['จำนวนเงิน']:,.0f}</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col3:
             st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">รายชื่อ</div>
+            <div style="background: #ffc107; padding: 1rem; border-radius: 8px; text-align: center; color: black;">
+                <div style="font-size: 12px;">จำนวนรายการ</div>
                 <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f}</div>
             </div>
             """, unsafe_allow_html=True)
         
-        with col4:
-            st.markdown(f"""
-            <div style="background: #6c757d; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
-                <div style="font-size: 12px;">จำนวนยางวันนี้รวม</div>
-                <div style="font-size: 24px; font-weight: bold;">{total_rubber_today:,.1f}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            break  # Only show total once
+        if i == 0:  # Show total only once
+            with col4:
+                st.markdown(f"""
+                <div style="background: #dc3545; padding: 1rem; border-radius: 8px; text-align: center; color: white;">
+                    <div style="font-size: 12px;">รวมทั้งหมดวันนี้</div>
+                    <div style="font-size: 18px; font-weight: bold;">
+                        {total_rubber_today:,.1f} กก.<br>
+                        ฿{total_money_today:,.0f}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
     # ========================================================================================
     # 📋 DATA TABLES SECTION
@@ -324,19 +334,19 @@ else:
             hide_index=True,
             column_config={
                 'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง',
+                    'จำนวนยาง (กก.)',
                     help='จำนวนยาง (กิโลกรัม)',
-                    format='%.2f'
+                    format='%.1f'
                 ),
                 'ราคา': st.column_config.NumberColumn(
-                    'ราคา',
+                    'ราคา (บาท/กก.)',
                     help='ราคาต่อหน่วย (บาท)',
-                    format='฿%.2f'
+                    format='%.2f'
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
-                    'จำนวนเงิน',
+                    'จำนวนเงิน (บาท)',
                     help='รายได้รวม (บาท)',
-                    format='฿%.2f'
+                    format='%.0f'
                 )
             }
         )
@@ -348,7 +358,7 @@ else:
             'จำนวนเงิน': 'sum',
             'ชื่อลูกค้า': 'count'
         }).reset_index()
-        grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'รายได้รวม', 'จำนวนรายการ']
+        grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนรายการ']
         
         st.dataframe(
             grouped_by_gong,
@@ -356,12 +366,12 @@ else:
             hide_index=True,
             column_config={
                 'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง',
-                    format='%.2f'
+                    'จำนวนยาง (กก.)',
+                    format='%.1f'
                 ),
-                'รายได้รวม': st.column_config.NumberColumn(
-                    'รายได้รวม',
-                    format='฿%.2f'
+                'จำนวนเงิน': st.column_config.NumberColumn(
+                    'จำนวนเงิน (บาท)',
+                    format='%.0f'
                 )
             }
         )
@@ -374,7 +384,7 @@ else:
             'ชื่อลูกค้า': 'count',
             'ราคา': 'mean'
         }).reset_index()
-        grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'รายได้รวม', 'จำนวนรายการ', 'ราคาเฉลี่ย']
+        grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนรายการ', 'ราคาเฉลี่ย']
         
         st.dataframe(
             grouped_by_branch,
@@ -382,16 +392,16 @@ else:
             hide_index=True,
             column_config={
                 'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง',
-                    format='%.2f'
+                    'จำนวนยาง (กก.)',
+                    format='%.1f'
                 ),
-                'รายได้รวม': st.column_config.NumberColumn(
-                    'รายได้รวม',
-                    format='฿%.2f'
+                'จำนวนเงิน': st.column_config.NumberColumn(
+                    'จำนวนเงิน (บาท)',
+                    format='%.0f'
                 ),
                 'ราคาเฉลี่ย': st.column_config.NumberColumn(
-                    'ราคาเฉลี่ย',
-                    format='฿%.2f'
+                    'ราคาเฉลี่ย (บาท/กก.)',
+                    format='%.2f'
                 )
             }
         )
