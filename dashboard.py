@@ -170,19 +170,12 @@ if df_filtered.empty:
     """, unsafe_allow_html=True)
 else:
     # Summary statistics by branch
-    st.markdown("## สถิติการยาง")
-    st.markdown("### ข้อมูลสำคัญการค้อนด้วยวันนี้")
-    
-    # Calculate statistics for each branch
-    branch_stats = df_filtered.groupby('สาขา').agg({
-        'จำนวนยาง': 'sum',
-        'จำนวนเงิน': 'sum',
-        'ชื่อลูกค้า': 'count'
-    }).reset_index()
+    st.markdown("## ลิตาการยาง")
+    st.markdown("### ข้อมูลยางก้อนถ้วยวันนี้")
     
     # Display branch statistics in cards
     for _, row in branch_stats.iterrows():
-        st.markdown(f"#### สาขา {row['สาขา']}")
+        st.markdown(f"#### จำนวนยาง {row['จำนวนยาง']}")
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -278,7 +271,7 @@ else:
     st.markdown("---")
     
     # Data tables
-    tab1, tab2, tab3 = st.tabs(["📋 ข้อมูলทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา"])
+    tab1, tab2, tab3 = st.tabs(["📋 ข้อมูลทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา"])
     
     with tab1:
         st.markdown("#### 📋 ข้อมูลรายละเอียด")
