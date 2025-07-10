@@ -123,8 +123,6 @@ def load_data():
 # 🎨 HEADER SECTION - MOVED UP
 # ========================================================================================
 
-st.markdown('<div class="company-title">ลิตาการยาง</div>', unsafe_allow_html=True)
-
 st.markdown("""
 <div class="main-header">
     <h1>ลิตาการยาง</h1>
