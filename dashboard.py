@@ -245,7 +245,7 @@ else:
                 height=350,
             )
             fig_branch.update_traces(
-                texttemplate='%{text:,.1f}',
+                texttemplate='%{text:.1f}',
                 textposition='outside',
                 marker_line_color='#324177',
                 marker_line_width=1.5
@@ -343,17 +343,17 @@ else:
                 'จำนวนยาง': st.column_config.NumberColumn(
                     'จำนวนยาง (กก.)',
                     help='จำนวนยาง (กิโลกรัม)',
-                    format="%,.1f"
+                    format='%.1f'
                 ),
                 'ราคา': st.column_config.NumberColumn(
                     'ราคา (บาท/กก.)',
                     help='ราคาต่อหน่วย (บาท)',
-                    format="%,.2f"
+                    format='%.2f'
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
                     'จำนวนเงิน (บาท)',
                     help='รายได้รวม (บาท)',
-                    format="%,.0f"
+                    format='%.0f'
                 )
             }
         )
@@ -372,11 +372,11 @@ else:
             column_config={
                 'จำนวนยาง': st.column_config.NumberColumn(
                     'จำนวนยาง (กก.)',
-                    format="%,.1f"
+                    format='%.1f'
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
                     'จำนวนเงิน (บาท)',
-                    format="%,.0f"
+                    format='%.0f'
                 )
             }
         )
@@ -396,15 +396,15 @@ else:
             column_config={
                 'จำนวนยาง': st.column_config.NumberColumn(
                     'จำนวนยาง (กก.)',
-                    format="%,.1f"
+                    format='%.1f'
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
                     'จำนวนเงิน (บาท)',
-                    format="%,.0f"
+                    format='%.0f'
                 ),
                 'ราคาเฉลี่ย': st.column_config.NumberColumn(
                     'ราคาเฉลี่ย (บาท/กก.)',
-                    format="%,.2f"
+                    format='%.2f'
                 )
             }
         )
