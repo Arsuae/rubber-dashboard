@@ -109,7 +109,7 @@ def load_data():
     except Exception as e:
         st.error(f"❌ ไม่สามารถโหลดข้อมูลได้: {str(e)}")
         return pd.DataFrame()
-
+        
 # ========================================================================================
 # 📊 SIDEBAR CONTROLS
 # ========================================================================================
@@ -173,9 +173,16 @@ else:
     st.markdown("## ลิตาการยาง")
     st.markdown("### ข้อมูลยางก้อนถ้วยวันนี้")
     
+    # Calculate statistics for each branch
+    branch_stats = df_filtered.groupby('สาขา').agg({
+        'จำนวนยาง': 'sum',
+        'จำนวนเงิน': 'sum',
+        'ชื่อลูกค้า': 'count'
+    }).reset_index()
+    
     # Display branch statistics in cards
     for _, row in branch_stats.iterrows():
-        st.markdown(f"#### จำนวนยาง {row['จำนวนยาง']}")
+        st.markdown(f"#### สาขา {row['สาขา']}")
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -370,6 +377,6 @@ else:
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 1rem;">
-    <p>📊 ลิตตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+    <p>📊 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
 </div>
 """.format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), unsafe_allow_html=True)
