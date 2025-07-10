@@ -1,66 +1,365 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, date
 
-# -------------------------------
-# 1. โหลดข้อมูลจาก Google Sheets
-# -------------------------------
-sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
-df = pd.read_csv(sheet_url, header=None)
+# ========================================================================================
+# 📊 CONFIGURATION & STYLING
+# ========================================================================================
 
-# ตั้งชื่อคอลัมน์
-df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
+st.set_page_config(
+    page_title="ลิตตาการยาง Dashboard",
+    page_icon="🌳",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# -------------------------------
-# 2. แปลงคอลัมน์วันที่ให้เป็น datetime
-# -------------------------------
-df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
+# Custom CSS for modern styling
+st.markdown("""
+<style>
+    .main-header {
+        background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #1e3c72;
+        margin: 1rem 0;
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        color: white;
+        margin: 1rem 0;
+    }
+    
+    .sidebar .sidebar-content {
+        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .stMetric {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 1rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# -------------------------------
-# 3. UI หน้าเว็บ
-# -------------------------------
-st.set_page_config(page_title="ลิตตาการยาง", layout="wide")
-st.title("💧 ลิตาการยาง")
-st.header("ข้อมูลยางพาราก้อนถ้วยวันนี้")
+# ========================================================================================
+# 🗂️ DATA LOADING & PROCESSING
+# ========================================================================================
 
-selected_date = st.date_input("เลือกวันที่", pd.Timestamp.today())
-branches = df['สาขา'].dropna().unique().tolist()
-selected_branches = st.multiselect("เลือกสาขา", branches, default=branches)
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def load_data():
+    """Load data from Google Sheets with caching"""
+    try:
+        sheet_url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
+        df = pd.read_csv(sheet_url, header=None)
+        
+        # Set column names
+        df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
+        
+        # Convert date column
+        df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
+        
+        # Clean numeric columns
+        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'], errors='coerce').fillna(0)
+        df['ราคา'] = pd.to_numeric(df['ราคา'], errors='coerce').fillna(0)
+        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'], errors='coerce').fillna(0)
+        
+        return df
+    except Exception as e:
+        st.error(f"❌ ไม่สามารถโหลดข้อมูลได้: {str(e)}")
+        return pd.DataFrame()
 
-# -------------------------------
-# 4. กรองข้อมูลตามวันที่และสาขา
-# -------------------------------
+# ========================================================================================
+# 🎨 HEADER SECTION
+# ========================================================================================
+
+st.markdown("""
+<div class="main-header">
+    <h1>🌳 ลิตตาการยาง Dashboard</h1>
+    <p>ระบบติดตาม และจัดการข้อมูลยางพาราก้อนถ้วย</p>
+</div>
+""", unsafe_allow_html=True)
+
+# ========================================================================================
+# 📊 SIDEBAR CONTROLS
+# ========================================================================================
+
+with st.sidebar:
+    st.markdown("### 🎛️ ตัวควบคุม")
+    
+    # Load data
+    df = load_data()
+    
+    if df.empty:
+        st.error("ไม่สามารถโหลดข้อมูลได้")
+        st.stop()
+    
+    # Date selector
+    st.markdown("#### 📅 เลือกวันที่")
+    selected_date = st.date_input(
+        "วันที่",
+        value=date.today(),
+        help="เลือกวันที่ที่ต้องการดูข้อมูล"
+    )
+    
+    # Branch selector
+    st.markdown("#### 🏢 เลือกสาขา")
+    branches = df['สาขา'].dropna().unique().tolist()
+    selected_branches = st.multiselect(
+        "สาขา",
+        options=branches,
+        default=branches,
+        help="เลือกสาขาที่ต้องการดูข้อมูล"
+    )
+    
+    # Data refresh button
+    if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+# ========================================================================================
+# 📈 DATA FILTERING & PROCESSING
+# ========================================================================================
+
+# Filter data
 df_filtered = df[
     (df['วันที่'].dt.date == selected_date) &
     (df['สาขา'].isin(selected_branches))
 ]
 
-# -------------------------------
-# 5. สรุปจำนวนยางรวม
-# -------------------------------
-st.subheader("📋 จำนวนยางทั้งหมดที่เลือก")
-total_amount = df_filtered['จำนวนยาง'].sum()
-st.metric("จำนวนยางรวม", f"{total_amount:,.2f}")
+# ========================================================================================
+# 📊 MAIN DASHBOARD
+# ========================================================================================
 
-# -------------------------------
-# 6. แสดงตารางข้อมูล (คอลัมน์ที่ต้องการเท่านั้น)
-# -------------------------------
 if df_filtered.empty:
-    st.warning("⚠️ ไม่มีข้อมูลตามวันที่และสาขาที่เลือก")
+    st.markdown("""
+    <div class="info-card">
+        <h3>⚠️ ไม่มีข้อมูล</h3>
+        <p>ไม่พบข้อมูลตามวันที่และสาขาที่เลือก กรุณาเลือกวันที่หรือสาขาอื่น</p>
+    </div>
+    """, unsafe_allow_html=True)
 else:
-    columns_to_show = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
-    st.dataframe(df_filtered[columns_to_show], use_container_width=True)
+    # Summary metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        total_rubber = df_filtered['จำนวนยาง'].sum()
+        st.metric(
+            label="🌳 จำนวนยางรวม",
+            value=f"{total_rubber:,.2f}",
+            delta=None,
+            help="จำนวนยางทั้งหมดในวันที่เลือก"
+        )
+    
+    with col2:
+        total_revenue = df_filtered['จำนวนเงิน'].sum()
+        st.metric(
+            label="💰 รายได้รวม",
+            value=f"฿{total_revenue:,.2f}",
+            delta=None,
+            help="รายได้รวมทั้งหมดในวันที่เลือก"
+        )
+    
+    with col3:
+        avg_price = df_filtered['ราคา'].mean() if len(df_filtered) > 0 else 0
+        st.metric(
+            label="📊 ราคาเฉลี่ย",
+            value=f"฿{avg_price:,.2f}",
+            delta=None,
+            help="ราคาเฉลี่ยต่อหน่วย"
+        )
+    
+    with col4:
+        total_customers = df_filtered['ชื่อลูกค้า'].nunique()
+        st.metric(
+            label="👥 จำนวนลูกค้า",
+            value=f"{total_customers}",
+            delta=None,
+            help="จำนวนลูกค้าทั้งหมด"
+        )
 
-# -------------------------------
-# 7. สรุปจำนวนยางแยกตามกอง
-# -------------------------------
-st.subheader("📦 สรุปจำนวนยางแยกตามกอง")
-grouped_by_gong = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
-st.dataframe(grouped_by_gong, use_container_width=True)
+    # ========================================================================================
+    # 📊 CHARTS SECTION
+    # ========================================================================================
+    
+    st.markdown("---")
+    
+    # Charts row
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 📊 จำนวนยางตามสาขา")
+        branch_summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
+        
+        if not branch_summary.empty:
+            fig_branch = px.bar(
+                branch_summary,
+                x='สาขา',
+                y='จำนวนยาง',
+                title="จำนวนยางแยกตามสาขา",
+                color='จำนวนยาง',
+                color_continuous_scale='viridis',
+                text='จำนวนยาง'
+            )
+            fig_branch.update_layout(
+                showlegend=False,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(size=12)
+            )
+            fig_branch.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+            st.plotly_chart(fig_branch, use_container_width=True)
+    
+    with col2:
+        st.markdown("#### 📦 จำนวนยางตามกอง")
+        gong_summary = df_filtered.groupby('กอง')['จำนวนยาง'].sum().reset_index()
+        
+        if not gong_summary.empty:
+            fig_gong = px.pie(
+                gong_summary,
+                values='จำนวนยาง',
+                names='กอง',
+                title="สัดส่วนจำนวนยางตามกอง",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            fig_gong.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(size=12)
+            )
+            fig_gong.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_gong, use_container_width=True)
 
-# -------------------------------
-# 8. สรุปกราฟจำนวนยางต่อสาขา
-# -------------------------------
-st.subheader("📊 สรุปจำนวนยางต่อสาขา")
-summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-if not summary.empty:
-    st.bar_chart(data=summary, x='สาขา', y='จำนวนยาง')
+    # ========================================================================================
+    # 📋 DATA TABLES SECTION
+    # ========================================================================================
+    
+    st.markdown("---")
+    
+    # Data tables
+    tab1, tab2, tab3 = st.tabs(["📋 ข้อมูলทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา"])
+    
+    with tab1:
+        st.markdown("#### 📋 ข้อมูลรายละเอียด")
+        columns_to_show = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
+        
+        # Add search functionality
+        search_term = st.text_input("🔍 ค้นหาลูกค้า", placeholder="พิมพ์ชื่อลูกค้าที่ต้องการค้นหา...")
+        
+        if search_term:
+            df_display = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(search_term, case=False, na=False)]
+        else:
+            df_display = df_filtered
+        
+        st.dataframe(
+            df_display[columns_to_show],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                'จำนวนยาง': st.column_config.NumberColumn(
+                    'จำนวนยาง',
+                    help='จำนวนยาง (กิโลกรัม)',
+                    format='%.2f'
+                ),
+                'ราคา': st.column_config.NumberColumn(
+                    'ราคา',
+                    help='ราคาต่อหน่วย (บาท)',
+                    format='฿%.2f'
+                ),
+                'จำนวนเงิน': st.column_config.NumberColumn(
+                    'จำนวนเงิน',
+                    help='รายได้รวม (บาท)',
+                    format='฿%.2f'
+                )
+            }
+        )
+    
+    with tab2:
+        st.markdown("#### 📦 สรุปข้อมูลตามกอง")
+        grouped_by_gong = df_filtered.groupby('กอง').agg({
+            'จำนวนยาง': 'sum',
+            'จำนวนเงิน': 'sum',
+            'ชื่อลูกค้า': 'count'
+        }).reset_index()
+        grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'รายได้รวม', 'จำนวนรายการ']
+        
+        st.dataframe(
+            grouped_by_gong,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                'จำนวนยาง': st.column_config.NumberColumn(
+                    'จำนวนยาง',
+                    format='%.2f'
+                ),
+                'รายได้รวม': st.column_config.NumberColumn(
+                    'รายได้รวม',
+                    format='฿%.2f'
+                )
+            }
+        )
+    
+    with tab3:
+        st.markdown("#### 🏢 สรุปข้อมูลตามสาขา")
+        grouped_by_branch = df_filtered.groupby('สาขา').agg({
+            'จำนวนยาง': 'sum',
+            'จำนวนเงิน': 'sum',
+            'ชื่อลูกค้า': 'count',
+            'ราคา': 'mean'
+        }).reset_index()
+        grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'รายได้รวม', 'จำนวนรายการ', 'ราคาเฉลี่ย']
+        
+        st.dataframe(
+            grouped_by_branch,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                'จำนวนยาง': st.column_config.NumberColumn(
+                    'จำนวนยาง',
+                    format='%.2f'
+                ),
+                'รายได้รวม': st.column_config.NumberColumn(
+                    'รายได้รวม',
+                    format='฿%.2f'
+                ),
+                'ราคาเฉลี่ย': st.column_config.NumberColumn(
+                    'ราคาเฉลี่ย',
+                    format='฿%.2f'
+                )
+            }
+        )
+
+# ========================================================================================
+# 📊 FOOTER
+# ========================================================================================
+
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: #666; padding: 1rem;">
+    <p>📊 ลิตตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+</div>
+""".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), unsafe_allow_html=True)
