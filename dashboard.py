@@ -31,36 +31,28 @@ def load_data():
 
 @st.cache_data(ttl=300)
 def load_employee_status():
-    url_status = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
+    url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
     url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
     headers = {"User-Agent": "Mozilla/5.0"}
-    status_resp = requests.get(url_status, headers=headers)
+    att_resp = requests.get(url_attendance, headers=headers)
     emp_resp = requests.get(url_employees, headers=headers)
 
-    status_df = pd.read_csv(io.StringIO(status_resp.content.decode('utf-8')))
-    emp_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
+    attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')))
+    employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
 
-    status_df.columns = status_df.columns.str.strip()
-    emp_df.columns = emp_df.columns.str.strip()
-    status_df = status_df.rename(columns={status_df.columns[0]: "ชื่อพนักงาน"})
-    emp_df = emp_df.rename(columns={emp_df.columns[0]: "ชื่อพนักงาน"})
+    employees_df.columns = employees_df.columns.str.strip()
+    attendance_df.columns = attendance_df.columns.str.strip()
 
-    status_columns = status_df.columns.tolist()[1:]  # ข้าม 'ชื่อพนักงาน'
-    try:
-        status_dates = pd.to_datetime(status_columns, dayfirst=True, errors='coerce')
-        today_col = status_dates[status_dates.dt.date == date.today()].index
-        if len(today_col) > 0:
-            target_col = status_df.columns[today_col[0] + 1]
-            status_df = status_df[['ชื่อพนักงาน', target_col]].rename(columns={target_col: 'สถานะ'})
-        else:
-            status_df['สถานะ'] = "ไม่ระบุ"
-    except:
-        status_df['สถานะ'] = "ไม่ระบุ"
+    today_str = date.today().strftime("%Y-%m-%d")
+    today_df = attendance_df[attendance_df["Date"] == today_str]
+    today_df = today_df[today_df["Punch"] == 0]
 
-    merged_df = pd.merge(emp_df[['ชื่อพนักงาน']], status_df, on='ชื่อพนักงาน', how='left')
-    merged_df['สถานะ'] = merged_df['สถานะ'].fillna("ไม่มาทำงาน")
-    return merged_df
+    present_ids = today_df["User ID"].astype(str).unique()
+    employees_df["User ID"] = employees_df["User ID"].astype(str)
+    employees_df["สถานะ"] = employees_df["User ID"].apply(lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน")
+
+    return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
 
 # ========================================================================================
 # STATE HANDLING
@@ -108,8 +100,6 @@ with st.sidebar:
             status = "✅ ออกงาน"
         elif status == "ไม่มาทำงาน":
             status = "❌ ไม่มาทำงาน"
-        elif status == "ออกงาน":
-            status = "✅ ออกงาน"
         else:
             status = "🟢 ทำงาน"
         st.write(f"{name}: {status}")
@@ -136,7 +126,7 @@ st.markdown("""
 # ========================================================================================
 # TABS
 # ========================================================================================
-selected_tab = st.radio("เลือกหมวดหมู่", ["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"], horizontal=True, index=["📊 ภาพรวม", "📋 สรุป", "📑 รายการ"].index(st.session_state.tab))
+selected_tab = st.radio("เลือกหมวดหมู่", ["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"], horizontal=True, index=["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"].index(st.session_state.tab))
 st.session_state.tab = selected_tab
 
 # ========================================================================================
@@ -183,7 +173,7 @@ elif selected_tab == "📋 สรุป":
 # ========================================================================================
 # TAB: รายการ
 # ========================================================================================
-elif selected_tab == "📑 รายการ":
+elif selected_tab == "📁 รายการ":
     st.subheader("📋 รายการลูกค้าทั้งหมด")
     keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า")
     if keyword:
