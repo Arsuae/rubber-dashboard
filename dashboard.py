@@ -19,9 +19,9 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap');
 
-    body {
+    html, body, [class*="st-emotion"] { /* Target Streamlit's main content wrapper */
         font-family: 'Noto Sans Thai', sans-serif;
-        background-color: #f4f7fa;
+        color: #333; /* Darker text for better readability */
     }
 
     .main-header {
@@ -31,22 +31,24 @@ st.markdown("""
         text-align: center;
         color: white;
         margin-bottom: 2rem;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow for header */
+        animation: fadeIn 1s ease-out; /* Add a subtle fade-in animation */
     }
     
     .main-header h1 {
-        font-size: 2.5rem;
+        font-size: 2.8rem; /* Slightly larger heading */
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem; /* Increased margin */
+        letter-spacing: 1.5px; /* Added letter spacing for visual appeal */
     }
     
     .main-header p {
-        font-size: 1.2rem;
+        font-size: 1.3rem; /* Slightly larger paragraph */
         font-weight: 300;
-        opacity: 0.9;
+        opacity: 0.95; /* Slightly less opaque */
     }
 
-    .branch-section {
+    .branch-section { /* This class doesn't seem to be explicitly used, but good to have */
         background: #ffffff;
         padding: 1.5rem;
         border-radius: 12px;
@@ -62,14 +64,16 @@ st.markdown("""
         text-align: center;
         color: white;
         margin: 0.5rem 0;
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Added box-shadow transition */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Default subtle shadow */
     }
     
     .stats-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-7px); /* Slightly more pronounced lift */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
     }
     
-    .metric-card {
+    .metric-card { /* This class is also not directly used, but good for reference */
         background: white;
         padding: 1.5rem;
         border-radius: 10px;
@@ -89,6 +93,7 @@ st.markdown("""
         border-radius: 12px;
         color: white;
         margin: 1rem 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Added shadow for info card */
     }
     
     .sidebar .sidebar-content {
@@ -101,12 +106,14 @@ st.markdown("""
         background: white;
         padding: 1.2rem;
         border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* Slightly lighter shadow */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid #e0e0e0; /* Subtle border */
     }
     
     .stMetric:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px); /* Slightly more pronounced lift */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12); /* Stronger shadow on hover */
     }
     
     .chart-container {
@@ -117,7 +124,7 @@ st.markdown("""
         margin: 1rem 0;
     }
     
-    .company-title {
+    .company-title { /* Not explicitly used, but a good style */
         text-align: center;
         font-size: 3rem;
         font-weight: 700;
@@ -133,42 +140,80 @@ st.markdown("""
         text-align: center;
         color: white;
         margin: 1.5rem 0;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow for total summary */
     }
     
     .stButton>button {
         background: #4b86b4;
         color: white;
         border-radius: 8px;
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1.2rem; /* Slightly larger padding for buttons */
         font-weight: 600;
-        transition: background 0.3s ease;
+        transition: background 0.3s ease, transform 0.2s ease; /* Added transform transition */
+        border: none; /* Remove default border */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .stButton>button:hover {
         background: #2a4d69;
+        transform: translateY(-2px); /* Subtle lift on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
-    .stTextInput>div>input {
+    .stTextInput>div>div>input { /* More specific target for text input */
         border-radius: 8px;
-        border: 1px solid #e9ecef;
-        padding: 0.5rem;
+        border: 1px solid #ced4da; /* More defined border color */
+        padding: 0.6rem 1rem; /* Adjusted padding */
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner shadow for depth */
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stTextInput>div>div>input:focus {
+        border-color: #4b86b4; /* Highlight border on focus */
+        box-shadow: 0 0 0 0.2rem rgba(75, 134, 180, 0.25); /* Focus ring */
+        outline: none;
     }
     
-    h3, h4, h5 {
+    h1, h2, h3, h4, h5, h6 { /* Apply Noto Sans Thai to all headings */
+        font-family: 'Noto Sans Thai', sans-serif;
         color: #2a4d69;
         font-weight: 600;
+    }
+
+    h3 {
+        font-size: 1.75rem; /* Slightly larger h3 */
     }
     
     .stTabs [data-baseweb="tab"] {
         font-size: 1.1rem;
         font-weight: 600;
-        padding: 0.5rem 1rem;
+        padding: 0.75rem 1.25rem; /* Larger tabs for better clickability */
         border-radius: 8px;
+        color: #4b86b4; /* Color for inactive tabs */
+        transition: background 0.2s ease, color 0.2s ease;
     }
     
     .stTabs [data-baseweb="tab"]:hover {
         background: #e9ecef;
+        color: #2a4d69; /* Darker text on hover */
+    }
+
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: #4b86b4; /* Active tab background */
+        color: white; /* Active tab text color */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for active tab */
+    }
+
+    /* Keyframe for fade-in animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Apply fade-in to main content elements */
+    .stBlock, .stColumn {
+        animation: fadeIn 0.8s ease-out forwards;
+        animation-delay: var(--animation-delay, 0s); /* Use a CSS variable for staggered delays */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -215,7 +260,7 @@ with st.sidebar:
     df = load_data()
     
     if df.empty:
-        st.error("ไม่สามารถโหลดข้อมูลได้")
+        st.error("ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบการเชื่อมต่อหรือแหล่งข้อมูล")
         st.stop()
     
     st.markdown("#### 📅 ตัวเลือกวันที่")
@@ -277,17 +322,17 @@ else:
     <div class="total-summary">
         <h2>📊 สรุปข้อมูลวันนี้</h2>
         <div style="display: flex; justify-content: center; gap: 2.5rem; margin-top: 1.5rem;">
-            <div class="stats-card">
-                <div style="font-size: 1rem; font-weight: 400;">จำนวนยางรวม</div>
-                <div style="font-size: 1.8rem; font-weight: 700;">{total_rubber_today:,.1f} กก.</div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #6ab04c 0%, #55efc4 100%);">
+                <div style="font-size: 1.1rem; font-weight: 400;">จำนวนยางรวม</div>
+                <div style="font-size: 2.2rem; font-weight: 700;">{total_rubber_today:,.1f} กก.</div>
             </div>
-            <div class="stats-card">
-                <div style="font-size: 1rem; font-weight: 400;">จำนวนเงิน</div>
-                <div style="font-size: 1.8rem; font-weight: 700;">฿{total_money_today:,.0f}</div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);">
+                <div style="font-size: 1.1rem; font-weight: 400;">จำนวนเงิน</div>
+                <div style="font-size: 2.2rem; font-weight: 700;">฿{total_money_today:,.0f}</div>
             </div>
-            <div class="stats-card">
-                <div style="font-size: 1rem; font-weight: 400;">จำนวนลูกค้า</div>
-                <div style="font-size: 1.8rem; font-weight: 700;">{total_customers_today:,.0f} ราย</div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #fdcb6e 0%, #ffeaa7 100%);">
+                <div style="font-size: 1.1rem; font-weight: 400;">จำนวนลูกค้า</div>
+                <div style="font-size: 2.2rem; font-weight: 700;">{total_customers_today:,.0f} ราย</div>
             </div>
         </div>
     </div>
@@ -297,9 +342,13 @@ else:
     # 📊 CHARTS SECTION
     # ========================================================================================
     
+    st.markdown("---")
+    st.markdown("### 📈 ภาพรวมการดำเนินงาน")
+
     col1, col2 = st.columns([1.2, 0.8])
     
     with col1:
+        st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
         st.markdown("#### 📊 จำนวนยางตามสาขา")
         branch_summary = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
         
@@ -310,7 +359,7 @@ else:
                 y='จำนวนยาง',
                 title="จำนวนยางแยกตามสาขา",
                 color='จำนวนยาง',
-                color_continuous_scale='teal',
+                color_continuous_scale='teal', # Retained a good color scale
                 text='จำนวนยาง'
             )
             fig_branch.update_layout(
@@ -318,13 +367,16 @@ else:
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(size=12, family='Noto Sans Thai'),
-                title_font=dict(size=16, family='Noto Sans Thai', weight='bold'),
-                margin=dict(t=50, b=50)
+                title_font=dict(size=18, family='Noto Sans Thai', weight='bold', color='#2a4d69'), # Larger, bolder chart title
+                margin=dict(t=70, b=50), # Adjust margin for title
+                hoverlabel=dict(font_family='Noto Sans Thai') # Ensure hover text is also Thai font
             )
-            fig_branch.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+            fig_branch.update_traces(texttemplate='%{text:,.1f} กก.', textposition='outside') # More descriptive text
             st.plotly_chart(fig_branch, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     
     with col2:
+        st.markdown("<div class='chart-container'>", unsafe_allow_html=True)
         st.markdown("#### 💰 สัดส่วนรายได้ตามสาขา")
         money_summary = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
         
@@ -334,95 +386,101 @@ else:
                 values='จำนวนเงิน',
                 names='สาขา',
                 title="สัดส่วนรายได้ตามสาขา",
-                color_discrete_sequence=px.colors.qualitative.Pastel
+                color_discrete_sequence=px.colors.qualitative.Pastel # Good choice
             )
             fig_money.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(size=12, family='Noto Sans Thai'),
-                title_font=dict(size=16, family='Noto Sans Thai', weight='bold'),
-                margin=dict(t=50, b=50)
+                title_font=dict(size=18, family='Noto Sans Thai', weight='bold', color='#2a4d69'), # Larger, bolder chart title
+                margin=dict(t=70, b=50), # Adjust margin for title
+                hoverlabel=dict(font_family='Noto Sans Thai')
             )
-            fig_money.update_traces(textposition='inside', textinfo='percent+label')
+            fig_money.update_traces(textposition='inside', textinfo='percent+label', marker=dict(line=dict(color='#FFFFFF', width=1))) # White border for slices
             st.plotly_chart(fig_money, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # ========================================================================================
     # BRANCH STATISTICS SECTION
     # ========================================================================================
 
-    st.markdown("#### 🏢 สถิติแยกตามสาขา")
+    st.markdown("---")
+    st.markdown("### 🏢 สถิติแยกตามสาขา")
     
     for i, row in branch_stats.iterrows():
-        st.markdown(f"##### สาขา {row['สาขา']}")
-        col1, col2, col3 = st.columns(3)
+        st.markdown(f"#### สาขา **{row['สาขา']}**") # Bold the branch name for emphasis
+        col_b1, col_b2, col_b3 = st.columns(3)
         
-        with col1:
+        with col_b1:
             st.markdown(f"""
             <div class="stats-card" style="background: linear-gradient(135deg, #6ab04c 0%, #55efc4 100%);">
                 <div style="font-size: 1rem;">จำนวนยาง</div>
-                <div style="font-size: 1.6rem; font-weight: 700;">{row['จำนวนยาง']:,.1f} กก.</div>
+                <div style="font-size: 1.8rem; font-weight: 700;">{row['จำนวนยาง']:,.1f} กก.</div>
             </div>
             """, unsafe_allow_html=True)
         
-        with col2:
+        with col_b2:
             st.markdown(f"""
             <div class="stats-card" style="background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%);">
                 <div style="font-size: 1rem;">จำนวนเงิน</div>
-                <div style="font-size: 1.6rem; font-weight: 700;">฿{row['จำนวนเงิน']:,.0f}</div>
+                <div style="font-size: 1.8rem; font-weight: 700;">฿{row['จำนวนเงิน']:,.0f}</div>
             </div>
             """, unsafe_allow_html=True)
         
-        with col3:
+        with col_b3:
             st.markdown(f"""
             <div class="stats-card" style="background: linear-gradient(135deg, #fdcb6e 0%, #ffeaa7 100%);">
                 <div style="font-size: 1rem;">จำนวนลูกค้า</div>
-                <div style="font-size: 1.6rem; font-weight: 700;">{row['ชื่อลูกค้า']:,.0f} ราย</div>
+                <div style="font-size: 1.8rem; font-weight: 700;">{row['ชื่อลูกค้า']:,.0f} ราย</div>
             </div>
             """, unsafe_allow_html=True)
         
-        st.markdown("---")
-        
+        st.markdown("---") # Add a separator after each branch
+
     # ========================================================================================
     # 📋 DATA TABLES SECTION
     # ========================================================================================
     
-    st.markdown("---")
+    st.markdown("### 📊 รายละเอียดข้อมูลและสรุป")
     
     tab1, tab2, tab3 = st.tabs(["📋 ข้อมูลทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา"])
     
     with tab1:
-        st.markdown("#### 📋 รายละเอียดข้อมูล")
+        st.markdown("#### 📋 รายละเอียดการซื้อขายทั้งหมด")
         columns_to_show = ['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']
         
-        search_term = st.text_input("🔍 ค้นหาลูกค้า", placeholder="พิมพ์ชื่อลูกค้าที่ต้องการค้นหา...")
+        search_term = st.text_input("🔍 ค้นหาลูกค้า", placeholder="พิมพ์ชื่อลูกค้าที่ต้องการค้นหา...", key="customer_search")
         
         if search_term:
             df_display = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(search_term, case=False, na=False)]
         else:
             df_display = df_filtered
         
-        st.dataframe(
-            df_display[columns_to_show],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง (กก.)',
-                    help='จำนวนยาง (กิโลกรัม)',
-                    format='%.1f'
-                ),
-                'ราคา': st.column_config.NumberColumn(
-                    'ราคา (บาท/กก.)',
-                    help='ราคาต่อหน่วย (บาท)',
-                    format='%.2f'
-                ),
-                'จำนวนเงิน': st.column_config.NumberColumn(
-                    'จำนวนเงิน (บาท)',
-                    help='จำนวนเงิน (บาท)',
-                    format='%.0f'
-                )
-            }
-        )
+        if df_display.empty:
+            st.info("ไม่พบข้อมูลลูกค้าที่ค้นหา.")
+        else:
+            st.dataframe(
+                df_display[columns_to_show],
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    'จำนวนยาง': st.column_config.NumberColumn(
+                        'จำนวนยาง (กก.)',
+                        help='ปริมาณยางที่ซื้อ (กิโลกรัม)',
+                        format='%.1f'
+                    ),
+                    'ราคา': st.column_config.NumberColumn(
+                        'ราคา (บาท/กก.)',
+                        help='ราคาต่อกิโลกรัม (บาท)',
+                        format='%.2f'
+                    ),
+                    'จำนวนเงิน': st.column_config.NumberColumn(
+                        'จำนวนเงิน (บาท)',
+                        help='รวมจำนวนเงินที่ชำระ (บาท)',
+                        format='%.0f'
+                    )
+                }
+            )
     
     with tab2:
         st.markdown("#### 📦 สรุปข้อมูลตามกอง")
@@ -433,21 +491,24 @@ else:
         }).reset_index()
         grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนลูกค้า']
         
-        st.dataframe(
-            grouped_by_gong,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง (กก.)',
-                    format='%.1f'
-                ),
-                'จำนวนเงิน': st.column_config.NumberColumn(
-                    'จำนวนเงิน (บาท)',
-                    format='%.0f'
-                )
-            }
-        )
+        if grouped_by_gong.empty:
+            st.info("ไม่พบข้อมูลสรุปตามกอง.")
+        else:
+            st.dataframe(
+                grouped_by_gong,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    'จำนวนยาง': st.column_config.NumberColumn(
+                        'จำนวนยาง (กก.)',
+                        format='%.1f'
+                    ),
+                    'จำนวนเงิน': st.column_config.NumberColumn(
+                        'จำนวนเงิน (บาท)',
+                        format='%.0f'
+                    )
+                }
+            )
     
     with tab3:
         st.markdown("#### 🏢 สรุปข้อมูลตามสาขา")
@@ -459,25 +520,28 @@ else:
         }).reset_index()
         grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนลูกค้า', 'ราคาเฉลี่ย']
         
-        st.dataframe(
-            grouped_by_branch,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'จำนวนยาง': st.column_config.NumberColumn(
-                    'จำนวนยาง (กก.)',
-                    format='%.1f'
-                ),
-                'จำนวนเงิน': st.column_config.NumberColumn(
-                    'จำนวนเงิน (บาท)',
-                    format='%.0f'
-                ),
-                'ราคาเฉลี่ย': st.column_config.NumberColumn(
-                    'ราคาเฉลี่ย (บาท/กก.)',
-                    format='%.2f'
-                )
-            }
-        )
+        if grouped_by_branch.empty:
+            st.info("ไม่พบข้อมูลสรุปตามสาขา.")
+        else:
+            st.dataframe(
+                grouped_by_branch,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    'จำนวนยาง': st.column_config.NumberColumn(
+                        'จำนวนยาง (กก.)',
+                        format='%.1f'
+                    ),
+                    'จำนวนเงิน': st.column_config.NumberColumn(
+                        'จำนวนเงิน (บาท)',
+                        format='%.0f'
+                    ),
+                    'ราคาเฉลี่ย': st.column_config.NumberColumn(
+                        'ราคาเฉลี่ย (บาท/กก.)',
+                        format='%.2f'
+                    )
+                }
+            )
 
 # ========================================================================================
 # 📊 FOOTER
@@ -485,7 +549,8 @@ else:
 
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #2a4d69; padding: 1.5rem; font-size: 1rem;">
-    <p>📊 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+<div style="text-align: center; color: #6c757d; padding: 1.5rem; font-size: 0.9rem;">
+    <p>🌳 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {}</p>
+    <p>สร้างสรรค์ด้วย ❤️ โดยทีมงาน</p>
 </div>
 """.format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")), unsafe_allow_html=True)
