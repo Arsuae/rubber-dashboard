@@ -36,6 +36,8 @@ if 'selected_date' not in st.session_state:
     st.session_state.selected_date = date.today()
 if 'selected_branches' not in st.session_state:
     st.session_state.selected_branches = []
+if 'selected_groups' not in st.session_state:
+    st.session_state.selected_groups = []
 
 # ========================================================================================
 # SIDEBAR CONTROLS
@@ -50,14 +52,22 @@ with st.sidebar:
     selected_branches = st.multiselect("เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
     st.session_state.selected_branches = selected_branches
 
+    groups = df['กอง'].dropna().unique().tolist()
+    selected_groups = st.multiselect("เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
+    st.session_state.selected_groups = selected_groups
+
     if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
         st.cache_data.clear()
-        st.rerun()
+        df = load_data()
 
 # ========================================================================================
 # FILTERED DATA
 # ========================================================================================
-df_filtered = df[(df['วันที่'].dt.date == st.session_state.selected_date) & (df['สาขา'].isin(st.session_state.selected_branches))]
+df_filtered = df[
+    (df['วันที่'].dt.date == st.session_state.selected_date) &
+    (df['สาขา'].isin(st.session_state.selected_branches)) &
+    (df['กอง'].isin(st.session_state.selected_groups))
+]
 
 # ========================================================================================
 # HEADER
@@ -80,7 +90,7 @@ st.session_state.tab = selected_tab
 # ========================================================================================
 if selected_tab == "📊 ภาพรวม":
     if df_filtered.empty:
-        st.warning("ไม่มีข้อมูลในวันที่และสาขาที่เลือก")
+        st.warning("ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก")
         st.stop()
 
     col1, col2, col3 = st.columns(3)
@@ -130,7 +140,7 @@ elif selected_tab == "📑 รายการ":
     if result_df.empty:
         st.info("ไม่พบข้อมูลลูกค้าที่ค้นหา")
     else:
-        st.dataframe(result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']], use_container_width=True)
+        st.dataframe(result_df[['วันที่', 'สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']], use_container_width=True)
         csv = result_df.to_csv(index=False).encode('utf-8-sig')
         st.download_button("📥 ดาวน์โหลด", csv, "data.csv", "text/csv", use_container_width=True)
 
