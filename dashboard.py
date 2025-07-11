@@ -3,9 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, date, time as datetime_time
-import gspread
-from google.oauth2.service_account import Credentials
 import json
+import os
 
 # ========================================================================================
 # 📊 CONFIGURATION & STYLING
@@ -134,6 +133,14 @@ st.markdown("""
         margin: 1rem 0;
         border-left: 4px solid #007bff;
     }
+    
+    .credentials-section {
+        background: #fff3cd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        border-left: 4px solid #ffc107;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -230,35 +237,28 @@ def create_sample_attendance_data():
     return df
 
 @st.cache_data(ttl=60)  # Cache for 1 minute for more frequent updates
-def load_attendance_data(force_sample=False):
-    """Load attendance data from ZKTeco Google Sheets"""
+def load_attendance_data_with_credentials(uploaded_credentials=None, use_sample=False):
+    """Load attendance data from ZKTeco Google Sheets with proper credentials handling"""
     
-    if force_sample:
+    if use_sample:
         st.info("🔧 ใช้ข้อมูลตัวอย่างสำหรับการทดสอบ")
         return create_sample_attendance_data()
     
+    if uploaded_credentials is None:
+        st.warning("⚠️ ไม่พบไฟล์ credentials.json - ใช้ข้อมูลตัวอย่าง")
+        return create_sample_attendance_data()
+    
     try:
-        # ลองใช้ credentials ที่มีอยู่ในโปรเจค
-        credentials_dict = {
-            "type": "service_account",
-            "project_id": "effective-light-465210-d8",
-            "private_key_id": "cf04a3984d5c26ab89183749ffcde71aab1265da",
-            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCtH63zO5sQUAMr\nXFz8ILmKdqR2tfe+Ijfsc8q5MsuHu2l67UNi6wIhm1EpW+qLrgqdejB19/2TyckW\n2D/bSEZ+Bw5z5OoksD0u9b306bge41pIUhg+JYqzmcDO9Xe/f1puF4YU/r3K0+c1\n15N0HpW9+ZyX7d+89rqj3a4rXksiL9ssRoS3KZi8TiCEpd3tMt5lbDclkAiY9ID+\nPWZZEnmPQ2xPrcGTJoy8Tnks1pLZTooB5Ld4fnco9ej6NzFibvcYG8E0/fLefa3a\nRKAyPnjGpbkRCM1PJhc9DoGqhAf3rTmfysa2fpXx34sz+7K2Ba086WSMc9E3jgp+\n8U8GT837AgMBAAECggEAKM/KiIf5Jo/OJ3cnHnKyep88ZxW/mO1lJJMpa547V7yJ\nAacUFyoSfwynxem6sYHuU7Bd4zl6aFAN3RpOd2mi4IvWTuDch5iaW8snpChCtNlg\ny6K6v0/HUk6BIui/+X9SuJhIDgP9huaMX2d6Bco9/6Jr1W8Iqvm5Bu8341ZfvOeK\nLfYfR8rL7g0DMP3GgOwoDG/+J1Oqgj+qnFyhqXCtLaPcdFADVoOUJSARP59htLqT\nuSQfvLQh2CKbnwdZD3lQrThT9zWiD8917CNAZd5jutlv/LYQBjyVZwbfrVT972CE\nU/ZYEIIOKYm8oSTq+oKSSNdpRS0UqWRX1OGHMUGXhQKBgQDuM7470aYv9Oy/vozl\nqnF+a9GdoY9DFVWZE255TxG1e1um2N3VWQFntnPxmHadRdfVWHqRziHZMoZcIav0\nRxpklccyfdeMwS0oFxFF1UGnZtQYo5gTXkYGtMf6vmHmlkKGoH3zqQYskd3AXfIs\ndByKVCxI63OIt3uD6Rf7MaYrrwKBgQC6DyMlIaDgJOlOlGu+8QMoozcFIhwZL7Tu\nEHObjel9wdl4QtUQts2vVqmd4TuwrPf8jk73Q4Nj69+CnI+DJs6mbyAeRz35QhES\nWZrKlRS39+WHs9IyNcv+8Po8HxmmfY27uuVTuNYlXIdpNPmS3DgUbaT0g4I+zIbc\nXXiweDJZdQKBgDlFTY66WFedbrKnUN8DPOhlae+ZYYWCgqMcTepyvVJCB4Y1DBj4\nnmLeNkA3JQWpPjx4Wnfl9LNw92b9XYeM9OaMMGmOYh3gcEf8S9XbcT6bdZE6/Bxk\nBTgljRNXZNh49iPCQKYt1GMw6v0OWWSgwh/sHv2lRpDvdI4BpBdsF4TXAoGAGD64\nubH0IMEulcrJb4xAeR8roEOdnbqVvR/vsKmBb52/FOjAkvj/PIXyfFxJRvCDMCnr\nKFVn3bFy4rY8DT8VVqLMcKWf8ccmKln6zcM3e/GVu2U3Usun1YTZVtRGp2dc/MWR\n9KL1ZND15EO+8eA4fpD7GdG5Oy2ztSuI+pXvGbECgYBZRNZ3cwfLu6ZufdCbI+qi\n4TH2re26JWi3LL/+dx17rrhW/tsQz1F4q/XVVYLPCqdg91ZIAXe/sBKcdZ16rvkw\nD4Ef02rUDa60s4DG466/izQYuuBgSt4MXM9F/6+5tnFpjQnhHCNsBaE/fp7OYO8z\n3CdE26k54ehZ5KKkQxcQqw==\n-----END PRIVATE KEY-----\n",
-            "client_email": "rubber-app@effective-light-465210-d8.iam.gserviceaccount.com",
-            "client_id": "104704138988540810806",
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/rubber-app%40effective-light-465210-d8.iam.gserviceaccount.com",
-            "universe_domain": "googleapis.com"
-        }
+        # ใช้ credentials ที่อัปโหลด
+        import gspread
+        from google.oauth2.service_account import Credentials
         
         scope = [
             "https://spreadsheets.google.com/feeds",
             "https://www.googleapis.com/auth/drive"
         ]
         
-        credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
+        credentials = Credentials.from_service_account_info(uploaded_credentials, scopes=scope)
         gc = gspread.authorize(credentials)
         
         # เชื่อมต่อกับ Google Sheets สำหรับข้อมูลการลงเวลา
@@ -365,14 +365,38 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ ตัวควบคุม")
     
+    # Google Credentials Upload
+    st.markdown("#### 🔐 Google Credentials")
+    uploaded_credentials = None
+    
+    credentials_file = st.file_uploader(
+        "อัปโหลด credentials.json",
+        type=['json'],
+        help="อัปโหลดไฟล์ credentials.json สำหรับเชื่อมต่อ Google Sheets"
+    )
+    
+    if credentials_file is not None:
+        try:
+            uploaded_credentials = json.load(credentials_file)
+            st.success("✅ โหลดไฟล์ credentials สำเร็จ!")
+        except Exception as e:
+            st.error(f"❌ ไม่สามารถอ่านไฟล์ credentials ได้: {str(e)}")
+    else:
+        st.markdown("""
+        <div class="credentials-section">
+            <h5>⚠️ ไม่พบไฟล์ credentials.json</h5>
+            <p>กรุณาอัปโหลดไฟล์ credentials.json เพื่อเชื่อมต่อกับ Google Sheets หรือใช้ข้อมูลตัวอย่าง</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
     # Debug mode
     st.markdown("#### 🔧 โหมดแก้ไขปัญหา")
     debug_mode = st.checkbox("เปิดโหมด Debug", value=False)
-    use_sample_data = st.checkbox("ใช้ข้อมูลตัวอย่าง", value=False)
+    use_sample_data = st.checkbox("ใช้ข้อมูลตัวอย่าง", value=True)
     
     # Load data
     rubber_df = load_rubber_data()
-    attendance_df = load_attendance_data(force_sample=use_sample_data)
+    attendance_df = load_attendance_data_with_credentials(uploaded_credentials, use_sample_data)
     
     if rubber_df.empty:
         st.error("ไม่สามารถโหลดข้อมูลยางได้")
@@ -800,6 +824,35 @@ else:
     """, unsafe_allow_html=True)
 
 # ========================================================================================
+# 📋 INSTRUCTIONS SECTION
+# ========================================================================================
+
+if not show_attendance or not uploaded_credentials:
+    st.markdown("---")
+    st.markdown("### 📋 คำแนะนำการใช้งาน")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        #### 🔐 การเชื่อมต่อ Google Sheets จริง:
+        1. **สร้าง Service Account** ใน Google Cloud Console
+        2. **Download ไฟล์ credentials.json**
+        3. **แชร์ Google Sheets** ชื่อ "ZKTeco Attendance" ให้กับ Service Account
+        4. **อัปโหลดไฟล์ credentials.json** ในแถบข้าง
+        5. **ปิด "ใช้ข้อมูลตัวอย่าง"** เพื่อใช้ข้อมูลจริง
+        """)
+    
+    with col2:
+        st.markdown("""
+        #### 🧪 การใช้ข้อมูลตัวอย่าง:
+        1. **เปิด "ใช้ข้อมูลตัวอย่าง"** ในแถบข้าง
+        2. **เปิด "แสดงข้อมูลการลงเวลา"**
+        3. **ดูข้อมูลพนักงาน 10 คน** พร้อมสถานะต่างๆ
+        4. **ทดสอบฟีเจอร์ต่างๆ** ได้ทันที
+        """)
+
+# ========================================================================================
 # 📊 FOOTER
 # ========================================================================================
 
@@ -808,5 +861,6 @@ st.markdown(f"""
 <div style="text-align: center; color: #666; padding: 1rem;">
     <p>🌳 ลิตาการยาง Dashboard | อัพเดทล่าสุด: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}</p>
     <p>💼 ระบบจัดการข้อมูลยางพาราและการลงเวลาทำงาน</p>
+    <p style="font-size: 12px;">📁 ใช้ข้อมูลตัวอย่าง: {"✅" if use_sample_data else "❌"} | Google Sheets: {"✅" if uploaded_credentials else "❌"}</p>
 </div>
 """, unsafe_allow_html=True)
