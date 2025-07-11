@@ -32,26 +32,32 @@ def load_data():
 # ========================================================================================
 if 'tab' not in st.session_state:
     st.session_state.tab = "📊 ภาพรวม"
+if 'selected_date' not in st.session_state:
+    st.session_state.selected_date = date.today()
+if 'selected_branches' not in st.session_state:
+    st.session_state.selected_branches = []
 
 # ========================================================================================
 # SIDEBAR CONTROLS
 # ========================================================================================
 with st.sidebar:
     st.markdown("## 🎛️ ตัวกรองข้อมูล")
-    selected_date = st.date_input("เลือกวันที่", value=date.today())
+    selected_date = st.date_input("เลือกวันที่", value=st.session_state.selected_date)
+    st.session_state.selected_date = selected_date
+
     df = load_data()
     branches = df['สาขา'].dropna().unique().tolist()
-    selected_branches = st.multiselect("เลือกสาขา", options=branches, default=branches)
+    selected_branches = st.multiselect("เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
+    st.session_state.selected_branches = selected_branches
 
     if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
         st.cache_data.clear()
-        st.session_state.tab = "📊 ภาพรวม"
         st.rerun()
 
 # ========================================================================================
 # FILTERED DATA
 # ========================================================================================
-df_filtered = df[(df['วันที่'].dt.date == selected_date) & (df['สาขา'].isin(selected_branches))]
+df_filtered = df[(df['วันที่'].dt.date == st.session_state.selected_date) & (df['สาขา'].isin(st.session_state.selected_branches))]
 
 # ========================================================================================
 # HEADER
