@@ -271,7 +271,7 @@ def load_data():
 @st.cache_data(ttl=300)
 def load_employee_status():
     url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
-    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
+    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=95774305"
 
     headers = {"User-Agent": "Mozilla/5.0"}
     att_resp = requests.get(url_attendance, headers=headers)
