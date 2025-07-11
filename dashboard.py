@@ -140,8 +140,13 @@ elif selected_tab == "📑 รายการ":
     if result_df.empty:
         st.info("ไม่พบข้อมูลลูกค้าที่ค้นหา")
     else:
-        st.dataframe(result_df[['วันที่', 'สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']], use_container_width=True)
-        csv = result_df.to_csv(index=False).encode('utf-8-sig')
+        result_df = result_df.reset_index(drop=True)
+        result_df.index = result_df.index + 1
+        display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']]
+        display_df.insert(0, 'ลำดับ', result_df.index)
+        st.dataframe(display_df, use_container_width=True)
+
+        csv = display_df.to_csv(index=False).encode('utf-8-sig')
         st.download_button("📥 ดาวน์โหลด", csv, "data.csv", "text/csv", use_container_width=True)
 
 # ========================================================================================
