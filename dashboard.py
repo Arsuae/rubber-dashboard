@@ -20,39 +20,72 @@ st.set_page_config(
 # ========================================================================================
 @st.cache_data(ttl=300)
 def load_data():
-    url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
-    df = pd.read_csv(url, header=None)
-    df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
-    df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
-    df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-    df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-    df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-    return df
+    try:
+        url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
+        df = pd.read_csv(url, header=None)
+        df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
+        df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
+        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+        return df
+    except Exception as e:
+        st.error(f"ไม่สามารถโหลดข้อมูลได้: {str(e)}")
+        return pd.DataFrame()
 
 @st.cache_data(ttl=300)
 def load_employee_status():
-    url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
-    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
+    try:
+        url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
+        url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
-    headers = {"User-Agent": "Mozilla/5.0"}
-    att_resp = requests.get(url_attendance, headers=headers)
-    emp_resp = requests.get(url_employees, headers=headers)
+        headers = {"User-Agent": "Mozilla/5.0"}
+        att_resp = requests.get(url_attendance, headers=headers)
+        emp_resp = requests.get(url_employees, headers=headers)
 
-    attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')))
-    employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
+        if att_resp.status_code != 200 or emp_resp.status_code != 200:
+            st.warning("ไม่สามารถดึงข้อมูลพนักงานได้")
+            return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
 
-    employees_df.columns = employees_df.columns.str.strip()
-    attendance_df.columns = attendance_df.columns.str.strip()
+        attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')))
+        employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
 
-    today_str = date.today().strftime("%Y-%m-%d")
-    today_df = attendance_df[attendance_df["Date"] == today_str]
-    today_df = today_df[today_df["Punch"] == 0]
+        # ทำความสะอาดชื่อคอลัมน์
+        employees_df.columns = employees_df.columns.str.strip()
+        attendance_df.columns = attendance_df.columns.str.strip()
 
-    present_ids = today_df["User ID"].astype(str).unique()
-    employees_df["User ID"] = employees_df["User ID"].astype(str)
-    employees_df["สถานะ"] = employees_df["User ID"].apply(lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน")
+        # ตรวจสอบว่ามีคอลัมน์ที่ต้องการหรือไม่
+        required_emp_cols = ['User ID', 'Name']
+        required_att_cols = ['Date', 'User ID', 'Punch']
+        
+        missing_emp_cols = [col for col in required_emp_cols if col not in employees_df.columns]
+        missing_att_cols = [col for col in required_att_cols if col not in attendance_df.columns]
+        
+        if missing_emp_cols or missing_att_cols:
+            st.warning(f"ไม่พบคอลัมน์ที่จำเป็น: {missing_emp_cols + missing_att_cols}")
+            return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
 
-    return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
+        # กรองข้อมูลวันนี้
+        today_str = date.today().strftime("%Y-%m-%d")
+        today_df = attendance_df[attendance_df["Date"] == today_str]
+        today_df = today_df[today_df["Punch"] == 0]
+
+        # ดึง User ID ที่มาทำงานวันนี้
+        present_ids = today_df["User ID"].dropna().astype(str).unique()
+        
+        # ทำความสะอาดข้อมูล employees
+        employees_df = employees_df.dropna(subset=['User ID', 'Name'])
+        employees_df["User ID"] = employees_df["User ID"].astype(str)
+        employees_df["สถานะ"] = employees_df["User ID"].apply(
+            lambda x: "ทำงาน" if str(x) in present_ids else "ไม่มาทำงาน"
+        )
+
+        result_df = employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
+        return result_df
+
+    except Exception as e:
+        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {str(e)}")
+        return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
 
 # ========================================================================================
 # STATE HANDLING
@@ -75,43 +108,59 @@ with st.sidebar:
     st.session_state.selected_date = selected_date
 
     df = load_data()
-    branches = df['สาขา'].dropna().unique().tolist()
-    selected_branches = st.multiselect("เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
-    st.session_state.selected_branches = selected_branches
+    
+    if not df.empty:
+        branches = df['สาขา'].dropna().unique().tolist()
+        selected_branches = st.multiselect("เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
+        st.session_state.selected_branches = selected_branches
 
-    groups = df['กอง'].dropna().unique().tolist()
-    if "กอง3" not in groups:
-        groups.append("กอง3")
-    selected_groups = st.multiselect("เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
-    st.session_state.selected_groups = selected_groups
+        groups = df['กอง'].dropna().unique().tolist()
+        if "กอง3" not in groups:
+            groups.append("กอง3")
+        selected_groups = st.multiselect("เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
+        st.session_state.selected_groups = selected_groups
+    else:
+        st.error("ไม่มีข้อมูลให้แสดง")
+        st.session_state.selected_branches = []
+        st.session_state.selected_groups = []
 
     if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
         st.cache_data.clear()
-        df = load_data()
+        st.rerun()
 
     st.markdown("---")
     st.markdown("## 👨‍🌾 พนักงาน")
+    
     emp_df = load_employee_status()
-    current_time = datetime.now().time()
-    for i, row in emp_df.iterrows():
-        name = row['ชื่อพนักงาน']
-        status = row['สถานะ']
-        if status == "ทำงาน" and current_time >= time(16, 0):
-            status = "✅ ออกงาน"
-        elif status == "ไม่มาทำงาน":
-            status = "❌ ไม่มาทำงาน"
-        else:
-            status = "🟢 ทำงาน"
-        st.write(f"{name}: {status}")
+    
+    if not emp_df.empty:
+        current_time = datetime.now().time()
+        for i, row in emp_df.iterrows():
+            name = row['ชื่อพนักงาน']
+            status = row['สถานะ']
+            
+            if status == "ทำงาน" and current_time >= time(16, 0):
+                status = "✅ ออกงาน"
+            elif status == "ไม่มาทำงาน":
+                status = "❌ ไม่มาทำงาน"
+            else:
+                status = "🟢 ทำงาน"
+            
+            st.write(f"{name}: {status}")
+    else:
+        st.write("ไม่สามารถดึงข้อมูลพนักงานได้")
 
 # ========================================================================================
 # FILTERED DATA
 # ========================================================================================
-df_filtered = df[
-    (df['วันที่'].dt.date == st.session_state.selected_date) &
-    (df['สาขา'].isin(st.session_state.selected_branches)) &
-    (df['กอง'].isin(st.session_state.selected_groups))
-]
+if not df.empty and st.session_state.selected_branches and st.session_state.selected_groups:
+    df_filtered = df[
+        (df['วันที่'].dt.date == st.session_state.selected_date) &
+        (df['สาขา'].isin(st.session_state.selected_branches)) &
+        (df['กอง'].isin(st.session_state.selected_groups))
+    ]
+else:
+    df_filtered = pd.DataFrame()
 
 # ========================================================================================
 # HEADER
@@ -135,61 +184,69 @@ st.session_state.tab = selected_tab
 if selected_tab == "📊 ภาพรวม":
     if df_filtered.empty:
         st.warning("ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก")
-        st.stop()
+    else:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("จำนวนยางรวม", f"{df_filtered['จำนวนยาง'].sum():,.1f} กก.")
+        col2.metric("จำนวนเงิน", f"฿{df_filtered['จำนวนเงิน'].sum():,.0f}")
+        col3.metric("จำนวนลูกค้า", f"{df_filtered['ชื่อลูกค้า'].count():,.0f} ราย")
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("จำนวนยางรวม", f"{df_filtered['จำนวนยาง'].sum():,.1f} กก.")
-    col2.metric("จำนวนเงิน", f"฿{df_filtered['จำนวนเงิน'].sum():,.0f}")
-    col3.metric("จำนวนลูกค้า", f"{df_filtered['ชื่อลูกค้า'].count():,.0f} ราย")
+        st.markdown("---")
+        st.subheader("🏢 จำนวนยางตามสาขา")
+        bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
+        if not bar_data.empty:
+            fig_bar = px.bar(bar_data, x='สาขา', y='จำนวนยาง', text='จำนวนยาง', color='จำนวนยาง')
+            fig_bar.update_traces(texttemplate='%{text:.1f} กก.', textposition='outside')
+            fig_bar.update_layout(font_family="Noto Sans Thai")
+            st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.markdown("---")
-    st.subheader("🏢 จำนวนยางตามสาขา")
-    bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-    fig_bar = px.bar(bar_data, x='สาขา', y='จำนวนยาง', text='จำนวนยาง', color='จำนวนยาง')
-    fig_bar.update_traces(texttemplate='%{text:.1f} กก.', textposition='outside')
-    fig_bar.update_layout(font_family="Noto Sans Thai")
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-    st.subheader("💰 สัดส่วนรายได้")
-    pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
-    fig_pie = px.pie(pie_data, values='จำนวนเงิน', names='สาขา', hole=0.4)
-    fig_pie.update_traces(textinfo='percent+label')
-    fig_pie.update_layout(font_family="Noto Sans Thai")
-    st.plotly_chart(fig_pie, use_container_width=True)
+        st.subheader("💰 สัดส่วนรายได้")
+        pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
+        if not pie_data.empty:
+            fig_pie = px.pie(pie_data, values='จำนวนเงิน', names='สาขา', hole=0.4)
+            fig_pie.update_traces(textinfo='percent+label')
+            fig_pie.update_layout(font_family="Noto Sans Thai")
+            st.plotly_chart(fig_pie, use_container_width=True)
 
 # ========================================================================================
 # TAB: สรุป
 # ========================================================================================
 elif selected_tab == "📋 สรุป":
-    st.subheader("📦 สรุปข้อมูลตามกอง")
-    by_gong = df_filtered.groupby('กอง').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count'}).reset_index()
-    st.dataframe(by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
+    if df_filtered.empty:
+        st.warning("ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก")
+    else:
+        st.subheader("📦 สรุปข้อมูลตามกอง")
+        by_gong = df_filtered.groupby('กอง').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count'}).reset_index()
+        st.dataframe(by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
 
-    st.subheader("🏢 สรุปข้อมูลตามสาขา")
-    by_branch = df_filtered.groupby('สาขา').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count', 'ราคา': 'mean'}).reset_index()
-    by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
-    st.dataframe(by_branch, use_container_width=True)
+        st.subheader("🏢 สรุปข้อมูลตามสาขา")
+        by_branch = df_filtered.groupby('สาขา').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count', 'ราคา': 'mean'}).reset_index()
+        by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
+        st.dataframe(by_branch, use_container_width=True)
 
 # ========================================================================================
 # TAB: รายการ
 # ========================================================================================
 elif selected_tab == "📁 รายการ":
     st.subheader("📋 รายการลูกค้าทั้งหมด")
-    keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า")
-    if keyword:
-        result_df = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)]
+    
+    if df_filtered.empty:
+        st.warning("ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก")
     else:
-        result_df = df_filtered
+        keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า")
+        if keyword:
+            result_df = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)]
+        else:
+            result_df = df_filtered
 
-    if result_df.empty:
-        st.info("ไม่พบข้อมูลลูกค้าที่ค้นหา")
-    else:
-        result_df = result_df.reset_index(drop=True)
-        display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']]
-        st.dataframe(display_df, use_container_width=True)
+        if result_df.empty:
+            st.info("ไม่พบข้อมูลลูกค้าที่ค้นหา")
+        else:
+            result_df = result_df.reset_index(drop=True)
+            display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']]
+            st.dataframe(display_df, use_container_width=True)
 
-        csv = display_df.to_csv(index=False).encode('utf-8-sig')
-        st.download_button("📅 ดาวน์โหลด", csv, "data.csv", "text/csv", use_container_width=True)
+            csv = display_df.to_csv(index=False).encode('utf-8-sig')
+            st.download_button("📅 ดาวน์โหลด", csv, "data.csv", "text/csv", use_container_width=True)
 
 # ========================================================================================
 # FOOTER
