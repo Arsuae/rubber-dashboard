@@ -224,7 +224,7 @@ else:
                 <div style="font-size: 28px; font-weight: bold;">{total_rubber_today:,.1f} กก.</div>
             </div>
             <div>
-                <div style="font-size: 14px; opacity: 0.9;">รายได้รวม</div>
+                <div style="font-size: 14px; opacity: 0.9;">จำนวนเงิน</div>
                 <div style="font-size: 28px; font-weight: bold;">฿{total_money_today:,.0f}</div>
             </div>
             <div>
@@ -315,7 +315,7 @@ else:
         with col3:
             st.markdown(f"""
             <div style="background: #ffc107; padding: 1rem; border-radius: 8px; text-align: center; color: black;">
-                <div style="font-size: 12px;">จำนวนรายการ</div>
+                <div style="font-size: 12px;">รายชื่อ</div>
                 <div style="font-size: 24px; font-weight: bold;">{row['ชื่อลูกค้า']:,.0f} ราย</div>
             </div>
             """, unsafe_allow_html=True)
@@ -360,7 +360,7 @@ else:
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
                     'จำนวนเงิน (บาท)',
-                    help='รายได้รวม (บาท)',
+                    help='จำนวนเงิน (บาท)',
                     format='%.0f'
                 )
             }
@@ -373,7 +373,7 @@ else:
             'จำนวนเงิน': 'sum',
             'ชื่อลูกค้า': 'count'
         }).reset_index()
-        grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนรายการ']
+        grouped_by_gong.columns = ['กอง', 'จำนวนยาง', 'จำนวนเงิน', 'รายชื่อ']
         
         st.dataframe(
             grouped_by_gong,
@@ -399,7 +399,7 @@ else:
             'ชื่อลูกค้า': 'count',
             'ราคา': 'mean'
         }).reset_index()
-        grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'จำนวนเงิน', 'จำนวนรายการ', 'ราคาเฉลี่ย']
+        grouped_by_branch.columns = ['สาขา', 'จำนวนยาง', 'จำนวนเงิน', 'รายชื่อ', 'ราคาเฉลี่ย']
         
         st.dataframe(
             grouped_by_branch,
