@@ -424,7 +424,7 @@ else:
                 <div class="summary-value">{total_rubber_today:,.1f} กก.</div>
             </div>
             <div class="summary-item">
-                <div class="summary-label">รายได้รวม</div>
+                <div class="summary-label">จำนวนเงิน</div>
                 <div class="summary-value">฿{total_money_today:,.0f}</div>
             </div>
             <div class="summary-item">
@@ -474,7 +474,7 @@ else:
     
     with col2:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.markdown("#### 💰 สัดส่วนรายได้ตามสาขา")
+        st.markdown("#### 💰 สัดส่วนจำนวนเงินตามสาขา")
         money_summary = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
         
         if not money_summary.empty:
@@ -482,7 +482,7 @@ else:
                 money_summary,
                 values='จำนวนเงิน',
                 names='สาขา',
-                title="สัดส่วนรายได้ตามสาขา",
+                title="สัดส่วนจำนวนเงินตามสาขา",
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig_money.update_layout(
@@ -517,7 +517,7 @@ else:
                     <div class="stat-value">฿{row['จำนวนเงิน']:,.0f}</div>
                 </div>
                 <div class="stat-item stat-customers">
-                    <div class="stat-label">จำนวนรายการ</div>
+                    <div class="stat-label">จำนวนลูกค้า</div>
                     <div class="stat-value">{row['ชื่อลูกค้า']:,.0f} ราย</div>
                 </div>
             </div>
@@ -563,7 +563,7 @@ else:
                 ),
                 'จำนวนเงิน': st.column_config.NumberColumn(
                     'จำนวนเงิน (บาท)',
-                    help='รายได้รวม (บาท)',
+                    help='จำนวนเงิน (บาท)',
                     format='%.0f'
                 )
             }
