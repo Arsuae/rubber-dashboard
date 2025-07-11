@@ -27,6 +27,30 @@ def load_data():
     df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
     return df
 
+@st.cache_data(ttl=300)
+def load_employee_status():
+    url_status = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
+    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"  # Sheet 'พนักงาน'
+
+    status_df = pd.read_csv(url_status)
+    status_df.columns = status_df.columns.str.strip()
+    status_df = status_df.rename(columns={status_df.columns[0]: "ชื่อพนักงาน"})
+
+    today_str = date.today().strftime("%Y-%m-%d")
+    if today_str in status_df.columns:
+        status_df = status_df[['ชื่อพนักงาน', today_str]].rename(columns={today_str: 'สถานะ'})
+    else:
+        status_df['สถานะ'] = "ไม่ระบุ"
+
+    emp_df = pd.read_csv(url_employees)
+    emp_df.columns = emp_df.columns.str.strip()
+    emp_df = emp_df.rename(columns={emp_df.columns[0]: "ชื่อพนักงาน"})
+
+    # Merge to keep only employees from the employee list
+    merged_df = pd.merge(emp_df[['ชื่อพนักงาน']], status_df, on='ชื่อพนักงาน', how='left')
+    merged_df['สถานะ'] = merged_df['สถานะ'].fillna("ไม่มาทำงาน")
+    return merged_df
+
 # ========================================================================================
 # STATE HANDLING
 # ========================================================================================
@@ -64,16 +88,20 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("## 👨‍🌾 พนักงาน")
-    employees = ["สมศรี", "สมหญิง", "สมปอง"]
+    emp_df = load_employee_status()
     current_time = datetime.now().time()
-    for emp in employees:
-        if emp == "สมศรี":
-            status = "ทำงาน"
-        elif emp == "สมหญิง":
-            status = "ไม่มาทำงาน"
+    for i, row in emp_df.iterrows():
+        name = row['ชื่อพนักงาน']
+        status = row['สถานะ']
+        if status == "ทำงาน" and current_time >= time(16, 0):
+            status = "✅ ออกงาน"
+        elif status == "ไม่มาทำงาน":
+            status = "❌ ไม่มาทำงาน"
+        elif status == "ออกงาน":
+            status = "✅ ออกงาน"
         else:
-            status = "ออกงาน" if current_time >= time(16, 0) else "ทำงาน"
-        st.write(f"{emp}: {status}")
+            status = "🟢 ทำงาน"
+        st.write(f"{name}: {status}")
 
 # ========================================================================================
 # FILTERED DATA
