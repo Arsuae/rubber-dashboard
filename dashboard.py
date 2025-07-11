@@ -53,6 +53,8 @@ with st.sidebar:
     st.session_state.selected_branches = selected_branches
 
     groups = df['กอง'].dropna().unique().tolist()
+    if "กอง3" not in groups:
+        groups.append("กอง3")
     selected_groups = st.multiselect("เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
     st.session_state.selected_groups = selected_groups
 
