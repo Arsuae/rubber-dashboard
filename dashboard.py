@@ -31,7 +31,7 @@ def load_data():
 # STATE HANDLING
 # ========================================================================================
 if 'tab' not in st.session_state:
-    st.session_state.tab = "📊 ภาพรวม"
+    st.session_state.tab = "📑 รายการ"
 if 'selected_date' not in st.session_state:
     st.session_state.selected_date = date.today()
 if 'selected_branches' not in st.session_state:
