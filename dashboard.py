@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, date, time
+import io
+import requests
 
 # ========================================================================================
 # CONFIG
@@ -30,9 +32,16 @@ def load_data():
 @st.cache_data(ttl=300)
 def load_employee_status():
     url_status = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
-    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"  # Sheet 'พนักงาน'
+    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
-    status_df = pd.read_csv(url_status)
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    status_resp = requests.get(url_status, headers=headers)
+    emp_resp = requests.get(url_employees, headers=headers)
+
+    status_df = pd.read_csv(io.StringIO(status_resp.content.decode('utf-8')))
+    emp_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
+
     status_df.columns = status_df.columns.str.strip()
     status_df = status_df.rename(columns={status_df.columns[0]: "ชื่อพนักงาน"})
 
@@ -42,11 +51,9 @@ def load_employee_status():
     else:
         status_df['สถานะ'] = "ไม่ระบุ"
 
-    emp_df = pd.read_csv(url_employees)
     emp_df.columns = emp_df.columns.str.strip()
     emp_df = emp_df.rename(columns={emp_df.columns[0]: "ชื่อพนักงาน"})
 
-    # Merge to keep only employees from the employee list
     merged_df = pd.merge(emp_df[['ชื่อพนักงาน']], status_df, on='ชื่อพนักงาน', how='left')
     merged_df['สถานะ'] = merged_df['สถานะ'].fillna("ไม่มาทำงาน")
     return merged_df
