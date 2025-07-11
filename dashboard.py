@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 # ========================================================================================
 # CONFIG
@@ -61,6 +61,19 @@ with st.sidebar:
     if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
         st.cache_data.clear()
         df = load_data()
+
+    st.markdown("---")
+    st.markdown("## 👨‍🌾 พนักงาน")
+    employees = ["สมศรี", "สมหญิง", "สมปอง"]
+    current_time = datetime.now().time()
+    for emp in employees:
+        if emp == "สมศรี":
+            status = "ทำงาน"
+        elif emp == "สมหญิง":
+            status = "ไม่มาทำงาน"
+        else:
+            status = "ออกงาน" if current_time >= time(16, 0) else "ทำงาน"
+        st.write(f"{emp}: {status}")
 
 # ========================================================================================
 # FILTERED DATA
