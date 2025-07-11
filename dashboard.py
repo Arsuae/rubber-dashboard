@@ -270,52 +270,36 @@ def load_data():
 
 @st.cache_data(ttl=300)
 def load_employee_status():
-    try:
-        url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
-        url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
+    url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
+    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
-        headers = {"User-Agent": "Mozilla/5.0"}
-        att_resp = requests.get(url_attendance, headers=headers)
-        emp_resp = requests.get(url_employees, headers=headers)
+    headers = {"User-Agent": "Mozilla/5.0"}
+    att_resp = requests.get(url_attendance, headers=headers)
+    emp_resp = requests.get(url_employees, headers=headers)
 
-        if att_resp.status_code != 200 or emp_resp.status_code != 200:
-            st.warning("ไม่สามารถดึงข้อมูลพนักงานได้")
-            return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
-
-        attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')))
-        employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')))
-
-        employees_df.columns = employees_df.columns.str.strip()
-        attendance_df.columns = attendance_df.columns.str.strip()
-
-        required_emp_cols = ['User ID', 'Name']
-        required_att_cols = ['Date', 'User ID', 'Punch']
-        
-        missing_emp_cols = [col for col in required_emp_cols if col not in employees_df.columns]
-        missing_att_cols = [col for col in required_att_cols if col not in attendance_df.columns]
-        
-        if missing_emp_cols or missing_att_cols:
-            st.warning(f"ไม่พบคอลัมน์ที่จำเป็น: {missing_emp_cols + missing_att_cols}")
-            return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
-
-        today_str = date.today().strftime("%Y-%m-%d")
-        today_df = attendance_df[attendance_df["Date"] == today_str]
-        today_df = today_df[today_df["Punch"] == 0]
-
-        present_ids = today_df["User ID"].dropna().astype(str).unique()
-        
-        employees_df = employees_df.dropna(subset=['User ID', 'Name'])
-        employees_df["User ID"] = employees_df["User ID"].astype(str)
-        employees_df["สถานะ"] = employees_df["User ID"].apply(
-            lambda x: "ทำงาน" if str(x) in present_ids else "ไม่มาทำงาน"
-        )
-
-        result_df = employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
-        return result_df
-
-    except Exception as e:
-        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {str(e)}")
+    if att_resp.status_code != 200 or emp_resp.status_code != 200:
+        st.warning("ไม่สามารถดึงข้อมูลพนักงานได้")
         return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ"])
+
+    attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')))
+    employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')), header=1)  # ✅ header แถวที่ 2
+
+    employees_df.columns = employees_df.columns.str.strip()
+    attendance_df.columns = attendance_df.columns.str.strip()
+
+    today_str = date.today().strftime("%Y-%m-%d")
+    today_df = attendance_df[attendance_df["Date"] == today_str]
+    today_df = today_df[today_df["Punch"] == 0]
+
+    present_ids = today_df["User ID"].dropna().astype(str).unique()
+    employees_df = employees_df.dropna(subset=['User ID', 'Name'])
+    employees_df["User ID"] = employees_df["User ID"].astype(str)
+
+    employees_df["สถานะ"] = employees_df["User ID"].apply(
+        lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน"
+    )
+
+    return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
 
 # ========================================================================================
 # STATE HANDLING
