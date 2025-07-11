@@ -1,3 +1,24 @@
+แน่นอนครับ ดูเหมือนว่าปัญหาเกิดจากฟังก์ชัน `load_employee_status` ไม่สามารถหาคอลัมน์ชื่อ **'User ID'** ในไฟล์ Google Sheets ที่ดึงมาได้ ซึ่งเป็นสาเหตุของข้อผิดพลาด `KeyError: 'User ID'` ที่แสดงในรูปภาพ
+
+ปัญหานี้มักเกิดขึ้นเมื่อชื่อคอลัมน์ในไฟล์ Google Sheet ไม่ตรงกับที่โค้ดคาดหวังทุกประการ อาจเป็นเพราะการใช้ภาษาไทย, การมีช่องว่างนำหน้า/ต่อท้าย, หรือการใช้ชื่ออื่นไปเลย
+
+### สาเหตุของปัญหา
+
+โค้ดเดิมในฟังก์ชัน `load_employee_status` พยายามเข้าถึงคอลัมน์ด้วยชื่อที่ฮาร์ดโค้ดไว้ เช่น `attendance_df["User ID"]` และ `employees_df["User ID"]` หากใน Google Sheet ของคุณ คอลัมน์นั้นมีชื่อว่า "รหัสพนักงาน" หรือ "User\_ID" โค้ดก็จะหาไม่เจอและเกิดข้อผิดพลาดทันที
+
+### วิธีการแก้ไข
+
+วิธีแก้ไขที่เสถียรที่สุดคือการ **เปลี่ยนชื่อคอลัมน์ตามลำดับตำแหน่ง** ทันทีหลังจากที่โหลดข้อมูลเข้ามา วิธีนี้จะทำให้โค้ดทำงานได้เสมอ ตราบใดที่ลำดับของคอลัมน์ใน Google Sheet ยังคงเหมือนเดิม (เช่น คอลัมน์แรกเป็นรหัสพนักงาน, คอลัมน์ที่สองเป็นชื่อ) โดยไม่ต้องกังวลว่าชื่อหัวตารางจะเป็นอะไร
+
+ผมได้แก้ไขโค้ดในฟังก์ชัน `load_employee_status` ให้มีความยืดหยุ่นมากขึ้นตามหลักการนี้แล้วครับ
+
+-----
+
+## โค้ดที่แก้ไขแล้ว (พร้อมใช้งาน)
+
+ด้านล่างนี้คือโค้ดฉบับสมบูรณ์ที่แก้ไขแล้ว คุณสามารถคัดลอกและนำไปใช้งานแทนที่โค้ดเดิมได้เลย
+
+```python
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -281,10 +302,31 @@ def load_employee_status():
         attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')), header=0)
         employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')), header=0)
 
-        employees_df.columns = employees_df.columns.str.strip()
-        attendance_df.columns = attendance_df.columns.str.strip()
+        # --- START: CODE CORRECTION ---
+        # แก้ไขปัญหาโดยการเปลี่ยนชื่อคอลัมน์ตามตำแหน่ง เพื่อป้องกัน KeyError
+        # สมมติฐาน:
+        # - employees_df: คอลัมน์ที่ 0 คือ ID, คอลัมน์ที่ 1 คือ Name
+        # - attendance_df: คอลัมน์ที่ 0 คือ Date, คอลัมน์ที่ 1 คือ User ID, คอลัมน์ที่ 2 คือ Punch
+        try:
+            employees_df = employees_df.rename(columns={
+                employees_df.columns[0]: 'User ID',
+                employees_df.columns[1]: 'Name'
+            })
+            attendance_df = attendance_df.rename(columns={
+                attendance_df.columns[0]: 'Date',
+                attendance_df.columns[1]: 'User ID',
+                attendance_df.columns[2]: 'Punch'
+            })
+        except IndexError:
+            st.error("ไม่สามารถโหลดข้อมูลพนักงานได้: โครงสร้างไฟล์ CSV ไม่ถูกต้อง")
+            return pd.DataFrame()
+        # --- END: CODE CORRECTION ---
 
         today_str = date.today().strftime("%Y-%m-%d")
+        
+        # แปลงคอลัมน์ Date เป็น datetime เพื่อการเปรียบเทียบที่ถูกต้อง
+        attendance_df['Date'] = pd.to_datetime(attendance_df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+        
         today_df = attendance_df[attendance_df["Date"] == today_str]
         today_df = today_df[today_df["Punch"] == 0]
 
@@ -296,6 +338,7 @@ def load_employee_status():
     except Exception as e:
         st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {e}")
         return pd.DataFrame()
+
 
 # ========================================================================================
 # STATE HANDLING
@@ -367,6 +410,7 @@ with st.sidebar:
             
             st.markdown(f'<div class="{card_class}">{name}<br><small>{status_text}</small></div>', unsafe_allow_html=True)
     else:
+        # This will now only show if the function returns an empty dataframe after an error
         st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
@@ -558,3 +602,4 @@ st.markdown(f"""
     <p>พัฒนาด้วย ❤️ สำหรับการจัดการข้อมูลยางพาราแบบเรียลไทม์</p>
 </div>
 """, unsafe_allow_html=True)
+```
