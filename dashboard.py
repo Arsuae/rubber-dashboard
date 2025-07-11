@@ -270,39 +270,36 @@ def load_data():
 
 @st.cache_data(ttl=300)
 def load_employee_status():
-    url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
-    url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
+    try:
+        url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
+        url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
-    headers = {"User-Agent": "Mozilla/5.0"}
-    att_resp = requests.get(url_attendance, headers=headers)
-    emp_resp = requests.get(url_employees, headers=headers)
+        headers = {"User-Agent": "Mozilla/5.0"}
+        att_resp = requests.get(url_attendance, headers=headers)
+        emp_resp = requests.get(url_employees, headers=headers)
 
-    attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')), header=0)
-employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')), header=0)
+        attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')), header=0)
+        employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')), header=0)
 
+        employees_df.columns = employees_df.columns.str.strip()
+        attendance_df.columns = attendance_df.columns.str.strip()
 
-    employees_df.columns = employees_df.columns.str.strip()
-    attendance_df.columns = attendance_df.columns.str.strip()
+        today_str = date.today().strftime("%Y-%m-%d")
+        today_df = attendance_df[attendance_df["Date"] == today_str]
+        today_df = today_df[today_df["Punch"] == 0]
 
-    today_str = date.today().strftime("%Y-%m-%d")
-    today_df = attendance_df[attendance_df["Date"] == today_str]
-    today_df = today_df[today_df["Punch"] == 0]
+        present_ids = today_df["User ID"].astype(str).unique()
+        employees_df["User ID"] = employees_df["User ID"].astype(str)
+        employees_df["สถานะ"] = employees_df["User ID"].apply(lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน")
 
-    present_ids = today_df["User ID"].astype(str).unique()
-    employees_df["User ID"] = employees_df["User ID"].astype(str)
-    employees_df["สถานะ"] = employees_df["User ID"].apply(lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน")
-
-    return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
-
-
-    st.write(employees_df.head())  # ✅ ดูว่ามี "User ID" / "Name" จริงไหม
-
+        return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
+    except Exception as e:
+        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {e}")
+        return pd.DataFrame()
 
 # ========================================================================================
 # STATE HANDLING
 # ========================================================================================
-if 'tab' not in st.session_state:
-    st.session_state.tab = "📁 รายการ"
 if 'selected_date' not in st.session_state:
     st.session_state.selected_date = date.today()
 if 'selected_branches' not in st.session_state:
@@ -323,14 +320,18 @@ with st.sidebar:
     df = load_data()
     
     if not df.empty:
-        branches = df['สาขา'].dropna().unique().tolist()
-        selected_branches = st.multiselect("🏢 เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
+        branches = sorted(df['สาขา'].dropna().unique().tolist())
+        # Set default to all branches if session state is empty
+        default_branches = st.session_state.selected_branches if st.session_state.selected_branches else branches
+        selected_branches = st.multiselect("🏢 เลือกสาขา", options=branches, default=default_branches)
         st.session_state.selected_branches = selected_branches
 
-        groups = df['กอง'].dropna().unique().tolist()
+        groups = sorted(df['กอง'].dropna().unique().tolist())
         if "กอง3" not in groups:
             groups.append("กอง3")
-        selected_groups = st.multiselect("📦 เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
+        # Set default to all groups if session state is empty
+        default_groups = st.session_state.selected_groups if st.session_state.selected_groups else groups
+        selected_groups = st.multiselect("📦 เลือกกอง", options=groups, default=default_groups)
         st.session_state.selected_groups = selected_groups
     else:
         st.error("ไม่มีข้อมูลให้แสดง")
@@ -397,17 +398,20 @@ st.markdown("""
 # ========================================================================================
 tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"])
 
+def display_no_data_message():
+    st.markdown("""
+    <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
+        <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
+        <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่, สาขา, หรือกองที่เลือก</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 # ========================================================================================
 # TAB: ภาพรวม
 # ========================================================================================
 with tab1:
     if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
+        display_no_data_message()
     else:
         # Metrics
         col1, col2, col3 = st.columns(3)
@@ -465,7 +469,7 @@ with tab1:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">💰 สัดส่วนรายได้</h3>', unsafe_allow_html=True)
         pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
-        if not pie_data.empty:
+        if not pie_data.empty and pie_data['จำนวนเงิน'].sum() > 0:
             fig_pie = px.pie(
                 pie_data, 
                 values='จำนวนเงิน', 
@@ -473,12 +477,13 @@ with tab1:
                 hole=0.4,
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
-            fig_pie.update_traces(textinfo='percent+label')
+            fig_pie.update_traces(textinfo='percent+label', pull=[0.05] * len(pie_data))
             fig_pie.update_layout(
                 font_family="Noto Sans Thai",
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font_color='#2a4d69'
+                font_color='#2a4d69',
+                legend_title_text='สาขา'
             )
             st.plotly_chart(fig_pie, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -488,23 +493,18 @@ with tab1:
 # ========================================================================================
 with tab2:
     if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
+        display_no_data_message()
     else:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
         by_gong = df_filtered.groupby('กอง').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count'}).reset_index()
-        st.dataframe(by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
+        st.dataframe(by_gong.rename(columns={'กอง': 'กอง', 'จำนวนยาง': 'จำนวนยางรวม', 'จำนวนเงิน': 'จำนวนเงินรวม', 'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
         by_branch = df_filtered.groupby('สาขา').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count', 'ราคา': 'mean'}).reset_index()
-        by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
+        by_branch = by_branch.rename(columns={'สาขา': 'สาขา', 'จำนวนยาง': 'จำนวนยางรวม', 'จำนวนเงิน': 'จำนวนเงินรวม', 'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
         st.dataframe(by_branch, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -513,12 +513,7 @@ with tab2:
 # ========================================================================================
 with tab3:
     if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
+        display_no_data_message()
     else:
         st.markdown('<div class="search-container">', unsafe_allow_html=True)
         st.markdown('<h3 style="color: #2a4d69; margin-bottom: 1rem;">📋 รายการลูกค้าทั้งหมด</h3>', unsafe_allow_html=True)
