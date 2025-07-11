@@ -126,6 +126,14 @@ st.markdown("""
         font-size: 14px;
         opacity: 0.9;
     }
+    
+    .debug-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        border-left: 4px solid #007bff;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -156,11 +164,81 @@ def load_rubber_data():
         st.error(f"❌ ไม่สามารถโหลดข้อมูลยางได้: {str(e)}")
         return pd.DataFrame()
 
+def create_sample_attendance_data():
+    """สร้างข้อมูลตัวอย่างสำหรับการลงเวลา"""
+    today = datetime.now()
+    sample_data = []
+    
+    employees = [
+        ("001", "สมชาย ใจดี"),
+        ("002", "สมหญิง รักงาน"),
+        ("003", "สมศักดิ์ ขยัน"),
+        ("004", "สมใจ มาตรง"),
+        ("005", "สมปอง ซื่อสัตย์"),
+        ("006", "สมหมาย ภักดี"),
+        ("007", "สมหวัง สู้งาน"),
+        ("008", "สมพงษ์ ตั้งใจ"),
+        ("009", "สมบัติ มั่นคง"),
+        ("010", "สมร เข็มแข็ง")
+    ]
+    
+    # สุ่มสร้างข้อมูลการลงเวลา
+    import random
+    for i, (emp_id, emp_name) in enumerate(employees):
+        # สุ่มว่าพนักงานคนนี้มาทำงานหรือไม่ (85% โอกาสมาทำงาน)
+        if random.random() < 0.85:
+            # เวลาเข้างาน (7:00-9:00)
+            check_in_hour = random.randint(7, 8)
+            check_in_minute = random.randint(0, 59)
+            check_in_time = today.replace(hour=check_in_hour, minute=check_in_minute, second=0, microsecond=0)
+            
+            sample_data.append({
+                'ID': f"{emp_id}_{today.strftime('%Y%m%d')}_{check_in_time.strftime('%H%M%S')}",
+                'User ID': emp_id,
+                'Name': emp_name,
+                'Timestamp': check_in_time,
+                'Status': 0,  # Check-in
+                'Punch': 1,
+                'Date': today.date(),
+                'Time': check_in_time.time(),
+                'Device IP': '192.168.1.3'
+            })
+            
+            # ถ้าเกิน 4 โมงเย็นแล้ว หรือสุ่มให้บางคนออกงาน
+            if today.hour >= 16 or (today.hour >= 12 and random.random() < 0.3):
+                check_out_hour = random.randint(max(16, today.hour-2), max(18, today.hour))
+                check_out_minute = random.randint(0, 59)
+                check_out_time = today.replace(hour=check_out_hour, minute=check_out_minute, second=0, microsecond=0)
+                
+                sample_data.append({
+                    'ID': f"{emp_id}_{today.strftime('%Y%m%d')}_{check_out_time.strftime('%H%M%S')}",
+                    'User ID': emp_id,
+                    'Name': emp_name,
+                    'Timestamp': check_out_time,
+                    'Status': 1,  # Check-out
+                    'Punch': 1,
+                    'Date': today.date(),
+                    'Time': check_out_time.time(),
+                    'Device IP': '192.168.1.3'
+                })
+    
+    df = pd.DataFrame(sample_data)
+    if not df.empty:
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'])
+        df['Date'] = pd.to_datetime(df['Date'])
+        
+    return df
+
 @st.cache_data(ttl=60)  # Cache for 1 minute for more frequent updates
-def load_attendance_data():
+def load_attendance_data(force_sample=False):
     """Load attendance data from ZKTeco Google Sheets"""
+    
+    if force_sample:
+        st.info("🔧 ใช้ข้อมูลตัวอย่างสำหรับการทดสอบ")
+        return create_sample_attendance_data()
+    
     try:
-        # ใช้ credentials ที่มีอยู่ในโปรเจค
+        # ลองใช้ credentials ที่มีอยู่ในโปรเจค
         credentials_dict = {
             "type": "service_account",
             "project_id": "effective-light-465210-d8",
@@ -193,73 +271,15 @@ def load_attendance_data():
         if not df.empty and 'Timestamp' in df.columns:
             df['Timestamp'] = pd.to_datetime(df['Timestamp'])
             df['Date'] = pd.to_datetime(df['Date'])
+            st.success("✅ เชื่อมต่อ Google Sheets สำเร็จ!")
+            return df
+        else:
+            st.warning("⚠️ ไม่มีข้อมูลใน Google Sheets - ใช้ข้อมูลตัวอย่าง")
+            return create_sample_attendance_data()
             
-        return df
     except Exception as e:
-        # ถ้าไม่สามารถโหลดข้อมูลจากการลงเวลาได้ ให้ใช้ข้อมูลตัวอย่าง
-        st.warning(f"⚠️ ไม่สามารถโหลดข้อมูลการลงเวลาได้: {str(e)} | ใช้ข้อมูลตัวอย่าง")
-        
-        # สร้างข้อมูลตัวอย่าง
-        today = datetime.now()
-        sample_data = []
-        
-        employees = [
-            ("001", "สมชาย ใจดี"),
-            ("002", "สมหญิง รักงาน"),
-            ("003", "สมศักดิ์ ขยัน"),
-            ("004", "สมใจ มาตรง"),
-            ("005", "สมปอง ซื่อสัตย์"),
-            ("006", "สมหมาย ภักดี"),
-            ("007", "สมหวัง สู้งาน"),
-            ("008", "สมพงษ์ ตั้งใจ")
-        ]
-        
-        # สุ่มสร้างข้อมูลการลงเวลา
-        import random
-        for i, (emp_id, emp_name) in enumerate(employees):
-            # สุ่มว่าพนักงานคนนี้มาทำงานหรือไม่ (80% โอกาสมาทำงาน)
-            if random.random() < 0.8:
-                # เวลาเข้างาน (7:00-9:00)
-                check_in_hour = random.randint(7, 8)
-                check_in_minute = random.randint(0, 59)
-                check_in_time = today.replace(hour=check_in_hour, minute=check_in_minute, second=0, microsecond=0)
-                
-                sample_data.append({
-                    'ID': f"{emp_id}_{today.strftime('%Y%m%d')}_{check_in_time.strftime('%H%M%S')}",
-                    'User ID': emp_id,
-                    'Name': emp_name,
-                    'Timestamp': check_in_time,
-                    'Status': 0,  # Check-in
-                    'Punch': 1,
-                    'Date': today.date(),
-                    'Time': check_in_time.time(),
-                    'Device IP': '192.168.1.3'
-                })
-                
-                # ถ้าเกิน 4 โมงเย็นแล้ว ให้เพิ่มข้อมูลการออกงาน
-                if today.hour >= 16:
-                    check_out_hour = random.randint(16, 18)
-                    check_out_minute = random.randint(0, 59)
-                    check_out_time = today.replace(hour=check_out_hour, minute=check_out_minute, second=0, microsecond=0)
-                    
-                    sample_data.append({
-                        'ID': f"{emp_id}_{today.strftime('%Y%m%d')}_{check_out_time.strftime('%H%M%S')}",
-                        'User ID': emp_id,
-                        'Name': emp_name,
-                        'Timestamp': check_out_time,
-                        'Status': 1,  # Check-out
-                        'Punch': 1,
-                        'Date': today.date(),
-                        'Time': check_out_time.time(),
-                        'Device IP': '192.168.1.3'
-                    })
-        
-        df = pd.DataFrame(sample_data)
-        if not df.empty:
-            df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-            df['Date'] = pd.to_datetime(df['Date'])
-            
-        return df
+        st.warning(f"⚠️ ไม่สามารถเชื่อมต่อ Google Sheets ได้: {str(e)} - ใช้ข้อมูลตัวอย่าง")
+        return create_sample_attendance_data()
 
 def get_employee_status(attendance_df):
     """คำนวณสถานะของพนักงานแต่ละคน"""
@@ -345,9 +365,14 @@ st.markdown("""
 with st.sidebar:
     st.markdown("### ⚙️ ตัวควบคุม")
     
+    # Debug mode
+    st.markdown("#### 🔧 โหมดแก้ไขปัญหา")
+    debug_mode = st.checkbox("เปิดโหมด Debug", value=False)
+    use_sample_data = st.checkbox("ใช้ข้อมูลตัวอย่าง", value=False)
+    
     # Load data
     rubber_df = load_rubber_data()
-    attendance_df = load_attendance_data()
+    attendance_df = load_attendance_data(force_sample=use_sample_data)
     
     if rubber_df.empty:
         st.error("ไม่สามารถโหลดข้อมูลยางได้")
@@ -385,6 +410,46 @@ with st.sidebar:
     
     if show_attendance:
         st.info("📌 สถานะอัตโนมัติ:\n- เช้า-บ่าย: กำลังทำงาน\n- หลัง 16:00: เลิกงานแล้ว")
+
+# Debug information
+if debug_mode:
+    st.markdown("---")
+    st.markdown("### 🔧 ข้อมูลการแก้ไขปัญหา")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class="debug-section">
+            <h4>📊 สถานะข้อมูลยางพารา</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if not rubber_df.empty:
+            st.success(f"✅ โหลดข้อมูลยางสำเร็จ: {len(rubber_df)} รายการ")
+            st.write("ตัวอย่างข้อมูล 3 แถวแรก:")
+            st.dataframe(rubber_df.head(3))
+        else:
+            st.error("❌ ไม่สามารถโหลดข้อมูลยางได้")
+    
+    with col2:
+        st.markdown("""
+        <div class="debug-section">
+            <h4>👥 สถานะข้อมูลการลงเวลา</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if not attendance_df.empty:
+            st.success(f"✅ โหลดข้อมูลการลงเวลาสำเร็จ: {len(attendance_df)} รายการ")
+            st.write("ตัวอย่างข้อมูล 3 แถวแรก:")
+            st.dataframe(attendance_df.head(3))
+            
+            # แสดงข้อมูลวันนี้
+            today = datetime.now().date()
+            today_data = attendance_df[attendance_df['Date'].dt.date == today]
+            st.info(f"📅 ข้อมูลวันนี้: {len(today_data)} รายการ")
+        else:
+            st.error("❌ ไม่สามารถโหลดข้อมูลการลงเวลาได้")
 
 # ========================================================================================
 # 👥 EMPLOYEE ATTENDANCE SECTION
@@ -445,6 +510,7 @@ if show_attendance:
         <div class="employee-attendance-section">
             <h2>👥 สถานะการลงเวลาทำงาน</h2>
             <p style="text-align: center; margin-top: 1rem;">ไม่มีข้อมูลการลงเวลาสำหรับวันนี้</p>
+            <p style="text-align: center; font-size: 14px; opacity: 0.8;">กรุณาเปิด "ใช้ข้อมูลตัวอย่าง" ในแถบข้างเพื่อดูตัวอย่าง</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -601,7 +667,7 @@ if not rubber_df.empty and selected_branches:
         st.markdown("---")
         
         # Data tables
-        tab1, tab2, tab3 = st.tabs(["📋 ข้อมูลทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา"])
+        tab1, tab2, tab3, tab4 = st.tabs(["📋 ข้อมูลทั้งหมด", "📦 สรุปตามกอง", "🏢 สรุปตามสาขา", "👥 ข้อมูลการลงเวลา"])
         
         with tab1:
             st.markdown("#### 📋 ข้อมูลรายละเอียดยางพารา")
@@ -692,6 +758,38 @@ if not rubber_df.empty and selected_branches:
                     )
                 }
             )
+        
+        with tab4:
+            st.markdown("#### 👥 ข้อมูลการลงเวลาทำงานวันนี้")
+            
+            if not attendance_df.empty:
+                today = datetime.now().date()
+                today_attendance = attendance_df[attendance_df['Date'].dt.date == today]
+                
+                if not today_attendance.empty:
+                    # จัดรูปแบบข้อมูลสำหรับแสดง
+                    display_attendance = today_attendance.copy()
+                    display_attendance['เวลา'] = display_attendance['Timestamp'].dt.strftime('%H:%M:%S')
+                    display_attendance['สถานะ'] = display_attendance['Status'].map({0: 'เข้างาน', 1: 'ออกงาน'})
+                    
+                    # เลือกคอลัมน์ที่จะแสดง
+                    columns_to_show = ['User ID', 'Name', 'เวลา', 'สถานะ']
+                    
+                    st.dataframe(
+                        display_attendance[columns_to_show].sort_values('เวลา', ascending=False),
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            'User ID': st.column_config.TextColumn('รหัสพนักงาน'),
+                            'Name': st.column_config.TextColumn('ชื่อพนักงาน'),
+                            'เวลา': st.column_config.TextColumn('เวลา'),
+                            'สถานะ': st.column_config.TextColumn('สถานะ')
+                        }
+                    )
+                else:
+                    st.info("ไม่มีข้อมูลการลงเวลาสำหรับวันนี้")
+            else:
+                st.warning("ไม่สามารถโหลดข้อมูลการลงเวลาได้")
 
 else:
     st.markdown("""
@@ -700,40 +798,6 @@ else:
         <p>กรุณาเลือกสาขาเพื่อดูข้อมูล</p>
     </div>
     """, unsafe_allow_html=True)
-
-# ========================================================================================
-# 📊 ATTENDANCE DATA TABLE (if enabled)
-# ========================================================================================
-
-if show_attendance and not attendance_df.empty:
-    st.markdown("---")
-    st.markdown("#### 🕐 ข้อมูลการลงเวลาทำงานวันนี้")
-    
-    today = datetime.now().date()
-    today_attendance = attendance_df[attendance_df['Date'].dt.date == today]
-    
-    if not today_attendance.empty:
-        # จัดรูปแบบข้อมูลสำหรับแสดง
-        display_attendance = today_attendance.copy()
-        display_attendance['เวลา'] = display_attendance['Timestamp'].dt.strftime('%H:%M:%S')
-        display_attendance['สถานะ'] = display_attendance['Status'].map({0: 'เข้างาน', 1: 'ออกงาน'})
-        
-        # เลือกคอลัมน์ที่จะแสดง
-        columns_to_show = ['User ID', 'Name', 'เวลา', 'สถานะ']
-        
-        st.dataframe(
-            display_attendance[columns_to_show].sort_values('เวลา', ascending=False),
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'User ID': st.column_config.TextColumn('รหัสพนักงาน'),
-                'Name': st.column_config.TextColumn('ชื่อพนักงาน'),
-                'เวลา': st.column_config.TextColumn('เวลา'),
-                'สถานะ': st.column_config.TextColumn('สถานะ')
-            }
-        )
-    else:
-        st.info("ไม่มีข้อมูลการลงเวลาสำหรับวันนี้")
 
 # ========================================================================================
 # 📊 FOOTER
