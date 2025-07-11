@@ -19,7 +19,6 @@ st.set_page_config(
 # ========================================================================================
 # CUSTOM CSS
 # ========================================================================================
-# The CSS provided by the user is used to style the dashboard with a clean, modern look.
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -278,56 +277,83 @@ def load_data():
 @st.cache_data(ttl=300)
 def load_employee_status():
     try:
-        # Load attendance and employee data from the specified Google Sheet GIDs
+        # Load attendance and employee data
         url_attendance = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1837491789"
         url_employees = "https://docs.google.com/spreadsheets/d/1ZDyYQWvPrxFEv7JzcWsVrn24w6iToFxbX0J0oup9DPo/export?format=csv&gid=1803808434"
 
         headers = {"User-Agent": "Mozilla/5.0"}
+        
+        # Load attendance data
         att_resp = requests.get(url_attendance, headers=headers)
-        emp_resp = requests.get(url_employees, headers=headers)
-
-        # Read CSV data into DataFrames
         attendance_df = pd.read_csv(io.StringIO(att_resp.content.decode('utf-8')), header=0)
+        
+        # Reset index to handle potential duplicate issues
+        attendance_df = attendance_df.reset_index(drop=True)
+        
+        # Load employee data
+        emp_resp = requests.get(url_employees, headers=headers)
         employees_df = pd.read_csv(io.StringIO(emp_resp.content.decode('utf-8')), header=0)
+        
+        # Reset index to handle potential duplicate issues
+        employees_df = employees_df.reset_index(drop=True)
 
-        # Handle column renaming based on index positions to ensure stability, 
-        # as headers might be unreliable or missing in the exported CSV.
-        try:
-            employees_df = employees_df.rename(columns={
-                employees_df.columns[0]: 'User ID',
-                employees_df.columns[1]: 'Name'
-            })
-            attendance_df = attendance_df.rename(columns={
-                attendance_df.columns[0]: 'Date',
-                attendance_df.columns[1]: 'User ID',
-                attendance_df.columns[2]: 'Punch'
-            })
-        except IndexError:
-            st.error("ไม่สามารถโหลดข้อมูลพนักงานได้: โครงสร้างไฟล์ CSV ไม่ถูกต้อง")
+        # Check if columns exist before renaming
+        if len(employees_df.columns) >= 2 and len(attendance_df.columns) >= 3:
+            # Rename columns based on position
+            employees_df.columns = ['User ID', 'Name'] + list(employees_df.columns[2:])
+            attendance_df.columns = ['Date', 'User ID', 'Punch'] + list(attendance_df.columns[3:])
+        else:
+            st.error("ข้อมูลพนักงานมีโครงสร้างไม่ถูกต้อง")
             return pd.DataFrame()
         
-        # Determine employee status for today
+        # Clean up data
+        employees_df = employees_df[['User ID', 'Name']].dropna(subset=['User ID', 'Name'])
+        attendance_df = attendance_df[['Date', 'User ID', 'Punch']].dropna(subset=['Date', 'User ID'])
+        
+        # Convert User ID to string to ensure matching
+        employees_df['User ID'] = employees_df['User ID'].astype(str).str.strip()
+        attendance_df['User ID'] = attendance_df['User ID'].astype(str).str.strip()
+        
+        # Get today's date
         today_str = date.today().strftime("%Y-%m-%d")
         
-        # Convert 'Date' column to datetime and format to string for accurate comparison
-        attendance_df['Date'] = pd.to_datetime(attendance_df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+        # Convert Date column with multiple format support
+        for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']:
+            try:
+                attendance_df['Date'] = pd.to_datetime(attendance_df['Date'], format=fmt, errors='coerce')
+                break
+            except:
+                continue
         
-        # Filter attendance data for today and specific punch status (Punch == 0 for present)
-        today_df = attendance_df[attendance_df["Date"] == today_str]
-        today_df = today_df[today_df["Punch"] == 0]
-
-        # Identify present employees
-        present_ids = today_df["User ID"].astype(str).unique()
-        employees_df["User ID"] = employees_df["User ID"].astype(str)
+        # Format date for comparison
+        attendance_df['Date'] = attendance_df['Date'].dt.strftime('%Y-%m-%d')
         
-        # Assign status based on attendance
-        employees_df["สถานะ"] = employees_df["User ID"].apply(lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน")
-
-        return employees_df[["Name", "สถานะ"]].rename(columns={"Name": "ชื่อพนักงาน"})
+        # Filter today's attendance
+        today_df = attendance_df[attendance_df['Date'] == today_str]
+        
+        # Convert Punch to numeric
+        today_df['Punch'] = pd.to_numeric(today_df['Punch'], errors='coerce')
+        
+        # Get present employees (Punch == 0)
+        present_df = today_df[today_df['Punch'] == 0]
+        present_ids = set(present_df['User ID'].unique())
+        
+        # Assign status
+        employees_df['สถานะ'] = employees_df['User ID'].apply(
+            lambda x: "ทำงาน" if x in present_ids else "ไม่มาทำงาน"
+        )
+        
+        # Return only Name and Status
+        result_df = employees_df[['Name', 'สถานะ']].rename(columns={'Name': 'ชื่อพนักงาน'})
+        
+        # Remove any duplicate rows
+        result_df = result_df.drop_duplicates()
+        
+        return result_df
+        
     except Exception as e:
-        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {e}")
+        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {str(e)}")
         return pd.DataFrame()
-
 
 # ========================================================================================
 # STATE HANDLING
@@ -361,7 +387,7 @@ with st.sidebar:
         selected_branches = st.multiselect("🏢 เลือกสาขา", options=branches, default=default_branches)
         st.session_state.selected_branches = selected_branches
 
-        # Group Multiselect (ensure 'กอง3' is included if present, or add it as a placeholder if expected)
+        # Group Multiselect
         groups = sorted(df['กอง'].dropna().unique().tolist())
         if "กอง3" not in groups:
             groups.append("กอง3")
@@ -388,11 +414,11 @@ with st.sidebar:
     
     if not emp_df.empty:
         current_time = datetime.now().time()
-        for i, row in emp_df.iterrows():
+        for idx, row in emp_df.iterrows():
             name = row['ชื่อพนักงาน']
             status = row['สถานะ']
             
-            # Determine card class and status text based on status and time (after 4 PM assumes work is done)
+            # Determine card class and status text
             if status == "ทำงาน" and current_time >= time(16, 0):
                 status_text = "✅ ออกงาน"
                 card_class = "employee-card employee-done"
@@ -403,16 +429,18 @@ with st.sidebar:
                 status_text = "🟢 ทำงาน"
                 card_class = "employee-card"
             
-            st.markdown(f'<div class="{card_class}">{name}<br><small>{status_text}</small></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="{card_class}">{name}<br><small>{status_text}</small></div>', 
+                       unsafe_allow_html=True)
     else:
-        st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', unsafe_allow_html=True)
+        st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', 
+                   unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================================================
 # FILTERED DATA
 # ========================================================================================
-# Filter the main DataFrame based on selected date, branches, and groups
+# Filter the main DataFrame based on selected criteria
 if not df.empty and st.session_state.selected_branches and st.session_state.selected_groups:
     df_filtered = df[
         (df['วันที่'].dt.date == st.session_state.selected_date) &
@@ -438,9 +466,10 @@ st.markdown("""
 tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"])
 
 def display_no_data_message():
-    """Displays a custom message when no data is available based on filters."""
+    """Displays a custom message when no data is available"""
     st.markdown("""
-    <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
+    <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); 
+         border-radius: 20px; margin: 2rem 0;">
         <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
         <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่, สาขา, หรือกองที่เลือก</p>
     </div>
@@ -456,7 +485,7 @@ with tab1:
         # Metrics
         col1, col2, col3 = st.columns(3)
         
-        # Total Rubber Weight (Kilograms)
+        # Total Rubber Weight
         with col1:
             st.markdown(f"""
             <div class="metric-card">
@@ -486,8 +515,6 @@ with tab1:
             </div>
             """, unsafe_allow_html=True)
 
-        # Charts
-        
         # Bar Chart: Rubber Weight by Branch
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">🏢 จำนวนยางตามสาขา</h3>', unsafe_allow_html=True)
@@ -541,18 +568,39 @@ with tab2:
     if df_filtered.empty:
         display_no_data_message()
     else:
-        # Summary by Group (กอง)
+        # Summary by Group
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
-        by_gong = df_filtered.groupby('กอง').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count'}).reset_index()
-        st.dataframe(by_gong.rename(columns={'กอง': 'กอง', 'จำนวนยาง': 'จำนวนยางรวม', 'จำนวนเงิน': 'จำนวนเงินรวม', 'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
+        by_gong = df_filtered.groupby('กอง').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count'
+        }).reset_index()
+        by_gong = by_gong.rename(columns={
+            'กอง': 'กอง', 
+            'จำนวนยาง': 'จำนวนยางรวม', 
+            'จำนวนเงิน': 'จำนวนเงินรวม', 
+            'ชื่อลูกค้า': 'จำนวนลูกค้า'
+        })
+        st.dataframe(by_gong, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Summary by Branch (สาขา)
+        # Summary by Branch
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<h3 class="chart-title">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
-        by_branch = df_filtered.groupby('สาขา').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count', 'ราคา': 'mean'}).reset_index()
-        by_branch = by_branch.rename(columns={'สาขา': 'สาขา', 'จำนวนยาง': 'จำนวนยางรวม', 'จำนวนเงิน': 'จำนวนเงินรวม', 'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
+        by_branch = df_filtered.groupby('สาขา').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count', 
+            'ราคา': 'mean'
+        }).reset_index()
+        by_branch = by_branch.rename(columns={
+            'สาขา': 'สาขา', 
+            'จำนวนยาง': 'จำนวนยางรวม', 
+            'จำนวนเงิน': 'จำนวนเงินรวม', 
+            'ชื่อลูกค้า': 'จำนวนลูกค้า', 
+            'ราคา': 'ราคาเฉลี่ย'
+        })
         st.dataframe(by_branch, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -564,7 +612,8 @@ with tab3:
         display_no_data_message()
     else:
         st.markdown('<div class="search-container">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #2a4d69; margin-bottom: 1rem;">📋 รายการลูกค้าทั้งหมด</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="color: #2a4d69; margin-bottom: 1rem;">📋 รายการลูกค้าทั้งหมด</h3>', 
+                   unsafe_allow_html=True)
         
         # Search functionality
         keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า", placeholder="กรอกชื่อลูกค้าที่ต้องการค้นหา...")
@@ -572,13 +621,16 @@ with tab3:
         
         # Filter by keyword
         if keyword:
-            result_df = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)]
+            result_df = df_filtered[
+                df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)
+            ]
         else:
             result_df = df_filtered
 
         if result_df.empty:
             st.markdown("""
-            <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.1); border-radius: 15px; margin: 1rem 0;">
+            <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.1); 
+                 border-radius: 15px; margin: 1rem 0;">
                 <h4 style="color: white;">🔍 ไม่พบข้อมูล</h4>
                 <p style="color: rgba(255,255,255,0.8);">ไม่พบข้อมูลลูกค้าที่ค้นหา</p>
             </div>
