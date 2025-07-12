@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ========================================================================================
-# CUSTOM CSS - Refined Pastel UI
+# CUSTOM CSS - Refined Pastel UI with Fixes
 # ========================================================================================
 st.markdown("""
 <style>
@@ -51,28 +51,27 @@ st.markdown("""
     }
 
     .sidebar-section {
-        background: #ffffff;
-        padding: 1.8rem;
-        border-radius: 1.5rem;
-        margin-bottom: 2rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        background: transparent;
+        padding: 1rem 1rem 0.5rem 1rem;
+        border-left: 3px solid #ccc;
+        border-radius: 0;
+        margin-bottom: 1.5rem;
     }
 
     .sidebar-title {
         color: #2a4365;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
-        margin-bottom: 1.2rem;
+        margin-bottom: 1rem;
         text-align: center;
     }
 
     .employee-card {
         background: #fdfdff;
         padding: 1rem 1.2rem;
-        border-radius: 1rem;
+        border-radius: 0.8rem;
         margin-bottom: 0.7rem;
-        border-left: 6px solid #a0aec0;
+        border-left: 4px solid #a0aec0;
         transition: all 0.2s ease;
     }
     .employee-card:hover {
@@ -100,7 +99,7 @@ st.markdown("""
     }
 
     .metric-value {
-        font-size: 2.8rem;
+        font-size: 2.6rem;
         font-weight: 700;
         color: #2b6cb0;
     }
@@ -112,33 +111,33 @@ st.markdown("""
     }
 
     .chart-container {
-        background: #ffffff;
-        border-radius: 1.5rem;
-        padding: 2rem;
+        background: transparent;
+        border-left: 3px solid #ccc;
+        border-radius: 0;
+        padding: 2rem 1rem;
         margin-bottom: 2.5rem;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
     }
 
     .chart-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 600;
         color: #2a4365;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .search-container, .footer {
-        background: #ffffff;
-        padding: 2rem;
-        border-radius: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        background: transparent;
+        border-left: 3px solid #ccc;
+        border-radius: 0;
+        padding: 1.2rem;
     }
 
     .footer {
         text-align: center;
-        font-size: 0.95rem;
-        color: #a0aec0;
-        margin-top: 4rem;
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-top: 3rem;
     }
 </style>
 """, unsafe_allow_html=True)
