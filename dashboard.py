@@ -14,11 +14,11 @@ st.set_page_config(
     page_title="ลิตาการยาง Dashboard",
     page_icon="🌳",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Collapsed by default for mobile
 )
 
 # ========================================================================================
-# CUSTOM CSS - Professional & Elegant Design
+# MOBILE-OPTIMIZED CSS
 # ========================================================================================
 st.markdown("""
 <style>
@@ -26,6 +26,10 @@ st.markdown("""
   @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap');
 
   /* Global Styles */
+  * {
+    box-sizing: border-box;
+  }
+  
   .stApp {
     font-family: 'Prompt', 'Kanit', sans-serif;
     background: linear-gradient(to bottom, #FFF9F3 0%, #F5F3FF 100%);
@@ -34,411 +38,400 @@ st.markdown("""
   }
   
   .block-container {
-    padding: 1.5rem;
-    max-width: 1400px;
+    padding: 0.5rem;
+    max-width: 100%;
     margin: auto;
   }
 
-  /* Sidebar Styling */
+  /* Mobile-First Header */
+  .header-container {
+    background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 50%, #E5F3FF 100%);
+    padding: 0.8rem;
+    border-radius: 12px;
+    border: 1px solid #FFD6E0;
+    margin-bottom: 0.8rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
+  }
+  
+  .header-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2C3E50;
+    margin: 0;
+    word-wrap: break-word;
+  }
+  
+  .header-subtitle {
+    font-size: 0.8rem;
+    color: #34495E;
+    margin-top: 0.2rem;
+    font-weight: 500;
+    word-wrap: break-word;
+  }
+
+  /* Mobile-Optimized Sidebar */
   section[data-testid="stSidebar"] {
     background: linear-gradient(180deg, #FFE5EC 0%, #E8E5FF 100%);
     border-right: 2px solid #FFD6E0;
+    width: 280px !important;
+  }
+  
+  section[data-testid="stSidebar"] > div {
+    width: 280px !important;
+    padding: 0.5rem;
   }
   
   .sidebar-section {
     background: rgba(255, 255, 255, 0.95);
-    padding: 1rem;
-    margin-bottom: 0.8rem;
-    border-radius: 12px;
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
+    border-radius: 10px;
     border: 1px solid #FFE0EC;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
   }
   
   .sidebar-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #2C3E50;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
     text-align: center;
+    word-wrap: break-word;
   }
 
-  /* Compact Header */
-  .header-container {
-    background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 50%, #E5F3FF 100%);
-    padding: 1rem 1.5rem;
-    border-radius: 16px;
-    border: 1px solid #FFD6E0;
-    margin-bottom: 1rem;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.15);
-  }
-  
-  .header-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #2C3E50;
-    margin: 0;
-  }
-  
-  .header-subtitle {
-    font-size: 0.9rem;
-    color: #34495E;
-    margin-top: 0.3rem;
-    font-weight: 500;
-  }
-
-  /* Tabs Styling */
+  /* Mobile Tabs */
   .stTabs [data-baseweb="tab-list"] {
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 0.4rem;
-    margin-bottom: 1rem;
+    border-radius: 10px;
+    padding: 0.3rem;
+    margin-bottom: 0.8rem;
     border: 1px solid #FFE0EC;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .stTabs [data-baseweb="tab"] {
     background: linear-gradient(135deg, #FFF5F5 0%, #F5F3FF 100%);
     border: 1px solid #FFE0EC;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
     color: #2C3E50;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
-  }
-  
-  .stTabs [data-baseweb="tab"]:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
+    white-space: nowrap;
+    min-width: fit-content;
   }
   
   .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
     border-color: #FF69B4;
     color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
   }
 
-  /* Compact Metric Cards */
-  .metric-card-compact {
+  /* Mobile Metric Cards */
+  .metric-card-mobile {
     background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
     border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 0.8rem;
+    border-radius: 10px;
+    padding: 0.6rem;
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-    height: 90px;
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
+    min-height: 75px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  .metric-card-compact:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+  .metric-icon-mobile {
+    font-size: 1.2rem;
+    margin-bottom: 0.1rem;
   }
 
-  .metric-icon-small {
-    font-size: 1.5rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .metric-value-small {
-    font-size: 1.3rem;
+  .metric-value-mobile {
+    font-size: 1.1rem;
     font-weight: 700;
     color: #E91E63;
-    line-height: 1.2;
+    line-height: 1.1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
-  .metric-label-small {
-    font-size: 0.75rem;
+  .metric-label-mobile {
+    font-size: 0.7rem;
     color: #2C3E50;
     font-weight: 500;
-    margin-top: 0.2rem;
+    margin-top: 0.1rem;
+    word-wrap: break-word;
   }
 
-  /* Compact Chart Container */
-  .chart-container-compact {
+  /* Mobile Chart Container */
+  .chart-container-mobile {
     background: linear-gradient(135deg, #FFFFFF 0%, #FFF9FC 100%);
     border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    border-radius: 10px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
   }
 
-  /* Employee Cards */
+  /* Employee Cards Mobile */
   .employee-card {
     background: linear-gradient(135deg, #FFEAA7 0%, #FFF3E0 100%);
-    padding: 0.6rem;
-    border-radius: 8px;
-    margin-bottom: 0.4rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.3rem;
     border-left: 3px solid #FFD93D;
     transition: all 0.3s ease;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #2C3E50;
+    word-wrap: break-word;
   }
   
   .employee-card b {
     color: #1A252F;
     font-weight: 600;
+    font-size: 0.85rem;
   }
   
   .employee-card small {
     color: #34495E;
-    font-size: 0.75rem;
-  }
-  
-  .employee-card:hover {
-    transform: translateX(3px);
-    box-shadow: 0 2px 8px rgba(255, 217, 61, 0.2);
-  }
-  
-  .employee-offline {
-    background: linear-gradient(135deg, #FFB6C1 0%, #FFE0EC 100%);
-    border-left-color: #FF69B4;
-  }
-  
-  .employee-done {
-    background: linear-gradient(135deg, #B2DFDB 0%, #E0F2F1 100%);
-    border-left-color: #4DB6AC;
-  }
-  
-  .employee-late {
-    background: linear-gradient(135deg, #FFE0B2 0%, #FFF3E0 100%);
-    border-left-color: #FFB74D;
-  }
-  
-  .employee-leave {
-    background: linear-gradient(135deg, #E1BEE7 0%, #F3E5F5 100%);
-    border-left-color: #BA68C8;
+    font-size: 0.7rem;
+    display: block;
+    margin-top: 0.1rem;
   }
 
-  /* Data Table Styling */
+  /* Mobile Data Table */
   .dataframe {
+    font-size: 0.75rem !important;
     border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #FFE0EC !important;
-    background: white;
-    color: #2C3E50;
-    font-size: 0.9rem;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .dataframe thead {
     background: linear-gradient(90deg, #FFB6C1, #DDA0DD);
     color: white;
     font-weight: 600;
-  }
-  
-  .dataframe tbody tr:nth-child(even) {
-    background: #FFF5F8;
-  }
-  
-  .dataframe tbody tr:hover {
-    background: #FFE0EC;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   
   .dataframe td, .dataframe th {
-    color: #2C3E50 !important;
-    font-weight: 500;
-    padding: 0.5rem !important;
+    padding: 0.3rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
   }
 
-  /* Search Container */
+  /* Mobile Search Container */
   .search-container {
     background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
     border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    border-radius: 10px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
   }
   
   .search-container h3 {
     color: #2C3E50 !important;
     font-weight: 600 !important;
-    font-size: 1.1rem !important;
-    margin-bottom: 0.8rem !important;
+    font-size: 1rem !important;
+    margin-bottom: 0.6rem !important;
   }
 
-  /* Input Fields */
+  /* Mobile Input Fields */
   .stTextInput > div > div > input,
   .stSelectbox > div > div > select,
   .stMultiSelect > div > div > div,
   .stDateInput > div > div > input {
     border: 1px solid #FFE0EC !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
     background: #FFF9FC !important;
-    padding: 0.5rem !important;
+    padding: 0.4rem !important;
     color: #2C3E50 !important;
     font-weight: 500 !important;
-    font-size: 0.9rem !important;
-  }
-  
-  .stTextInput > div > div > input:focus,
-  .stSelectbox > div > div > select:focus,
-  .stDateInput > div > div > input:focus {
-    border-color: #FF69B4 !important;
-    box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.2) !important;
-  }
-  
-  /* Labels */
-  .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDateInput label {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
+    font-size: 0.85rem !important;
   }
 
-  /* Buttons */
+  /* Mobile Buttons */
   .stButton > button {
     background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
-  }
-  
-  .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
+    box-shadow: 0 2px 6px rgba(255, 105, 180, 0.3);
+    width: 100%;
   }
   
   .stDownloadButton > button {
     background: linear-gradient(135deg, #98FB98 0%, #90EE90 100%);
     color: #1B5E20;
     border: 1px solid #90EE90;
-    border-radius: 8px;
-    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
-  }
-  
-  .stDownloadButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(144, 238, 144, 0.4);
+    width: 100%;
   }
 
-  /* Footer */
+  /* Mobile Footer */
   .footer {
     background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 100%);
     border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
+    border-radius: 10px;
+    padding: 0.8rem;
     text-align: center;
     color: #2C3E50;
-    font-size: 0.85rem;
-    margin-top: 1.5rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    font-size: 0.75rem;
+    margin-top: 1rem;
+    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
   }
   
   .footer p {
     color: #2C3E50 !important;
     font-weight: 500;
-    margin: 0.3rem 0;
+    margin: 0.2rem 0;
+    word-wrap: break-word;
   }
 
-  /* Alerts & Messages */
-  .stAlert {
-    border-radius: 8px;
-    border: 1px solid #FFE0EC;
-    background: linear-gradient(135deg, #FFF5F5 0%, #FFE0EC 100%);
-    color: #2C3E50 !important;
-    font-size: 0.9rem;
-  }
-  
-  .stAlert > div {
-    color: #2C3E50 !important;
-    font-weight: 500;
-  }
-
-  /* Empty State */
+  /* Empty State Mobile */
   .empty-state {
     text-align: center;
-    padding: 2rem;
+    padding: 1.5rem;
     background: rgba(255,255,255,0.9);
-    border-radius: 16px;
-    margin: 1rem 0;
+    border-radius: 12px;
+    margin: 0.8rem 0;
     border: 1px solid #FFE0EC;
   }
   
   .empty-state h3 {
     color: #2C3E50;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 1.1rem;
   }
   
   .empty-state p {
     color: #34495E;
+    font-size: 0.85rem;
   }
 
-  /* All text elements */
-  p, span, div, label {
-    color: #2C3E50;
-  }
-  
-  /* Headings */
-  h1, h2, h3, h4, h5, h6 {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-  }
-
-  /* Hide Plotly Toolbar */
+  /* Hide Plotly Toolbar on Mobile */
   .modebar {
     display: none !important;
   }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: #FFF5F8;
-    border-radius: 8px;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #FFB6C1, #DDA0DD);
-    border-radius: 8px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #FF69B4, #BA68C8);
-  }
-
-  /* Loading Spinner */
-  .stSpinner > div {
-    border-color: #FFB6C1 !important;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
+  /* Responsive Design for Larger Screens */
+  @media (min-width: 768px) {
+    .block-container {
+      padding: 1rem;
+    }
+    
     .header-title {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
     }
     
-    .metric-card-compact {
-      height: 80px;
-      padding: 0.6rem;
+    .header-subtitle {
+      font-size: 0.9rem;
     }
     
-    .metric-value-small {
-      font-size: 1.1rem;
+    .metric-card-mobile {
+      min-height: 85px;
+      padding: 0.8rem;
     }
     
-    .metric-label-small {
-      font-size: 0.7rem;
+    .metric-value-mobile {
+      font-size: 1.3rem;
+    }
+    
+    .metric-label-mobile {
+      font-size: 0.75rem;
+    }
+    
+    .dataframe {
+      font-size: 0.85rem !important;
+    }
+    
+    .dataframe td, .dataframe th {
+      max-width: 150px;
+      padding: 0.4rem !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .block-container {
+      padding: 1.5rem;
+      max-width: 1400px;
+    }
+    
+    .header-title {
+      font-size: 1.8rem;
+    }
+    
+    .header-subtitle {
+      font-size: 1rem;
+    }
+    
+    .metric-card-mobile {
+      min-height: 90px;
+    }
+    
+    .dataframe {
+      font-size: 0.9rem !important;
+    }
+    
+    .dataframe td, .dataframe th {
+      max-width: none;
+      padding: 0.5rem !important;
+    }
+  }
+
+  /* Prevent horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Ensure all content fits within viewport */
+  .main > div {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Fix Streamlit default margins on mobile */
+  @media (max-width: 768px) {
+    .main > div {
+      padding: 0 !important;
+    }
+    
+    section.main > div {
+      padding: 0 0.5rem !important;
     }
   }
 </style>
 """, unsafe_allow_html=True)
 
 # ========================================================================================
-# LOAD DATA FUNCTIONS
+# DETECT MOBILE DEVICE
+# ========================================================================================
+def is_mobile():
+    """Simple mobile detection based on viewport width"""
+    return st.session_state.get('viewport_width', 768) < 768
+
+# ========================================================================================
+# LOAD DATA FUNCTIONS (Same as before)
 # ========================================================================================
 @st.cache_data(ttl=300)
 def load_data():
@@ -552,13 +545,13 @@ with st.sidebar:
         # Display summary in 2x2 grid
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(76,175,80,0.1); border-radius: 8px; margin-bottom: 0.5rem;'><b style='color: #4CAF50; font-size: 1.2rem;'>{status_counts['มาทำงาน']}</b><br><small style='color: #2C3E50;'>มาทำงาน</small></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(242,153,74,0.1); border-radius: 8px;'><b style='color: #f2994a; font-size: 1.2rem;'>{status_counts['มาสาย']}</b><br><small style='color: #2C3E50;'>มาสาย</small></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 0.4rem; background: rgba(76,175,80,0.1); border-radius: 6px; margin-bottom: 0.4rem;'><b style='color: #4CAF50; font-size: 1rem;'>{status_counts['มาทำงาน']}</b><br><small style='color: #2C3E50; font-size: 0.7rem;'>มาทำงาน</small></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 0.4rem; background: rgba(242,153,74,0.1); border-radius: 6px;'><b style='color: #f2994a; font-size: 1rem;'>{status_counts['มาสาย']}</b><br><small style='color: #2C3E50; font-size: 0.7rem;'>มาสาย</small></div>", unsafe_allow_html=True)
         with col2:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(102,126,234,0.1); border-radius: 8px; margin-bottom: 0.5rem;'><b style='color: #667eea; font-size: 1.2rem;'>{status_counts['ลา']}</b><br><small style='color: #2C3E50;'>ลางาน</small></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(244,67,54,0.1); border-radius: 8px;'><b style='color: #f44336; font-size: 1.2rem;'>{status_counts['ขาด']}</b><br><small style='color: #2C3E50;'>ขาดงาน</small></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 0.4rem; background: rgba(102,126,234,0.1); border-radius: 6px; margin-bottom: 0.4rem;'><b style='color: #667eea; font-size: 1rem;'>{status_counts['ลา']}</b><br><small style='color: #2C3E50; font-size: 0.7rem;'>ลางาน</small></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; padding: 0.4rem; background: rgba(244,67,54,0.1); border-radius: 6px;'><b style='color: #f44336; font-size: 1rem;'>{status_counts['ขาด']}</b><br><small style='color: #2C3E50; font-size: 0.7rem;'>ขาดงาน</small></div>", unsafe_allow_html=True)
         
-        st.markdown("<hr style='margin: 0.8rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 0.6rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
         
         # Display individual employees
         for _, row in emp_df.iterrows():
@@ -579,7 +572,7 @@ with st.sidebar:
                 status_text = "🔴 ขาดงาน"
                 card_class = "employee-card employee-offline"
             
-            st.markdown(f'<div class="{card_class}"><b>{name}</b><br><small>{status_text}</small></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="{card_class}"><b>{name}</b><small>{status_text}</small></div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', unsafe_allow_html=True)
     
@@ -613,7 +606,7 @@ st.markdown("""
 tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุปข้อมูล", "📁 รายการ"])
 
 # ========================================================================================
-# TAB 1: Overview Dashboard
+# TAB 1: Overview Dashboard (Mobile Optimized)
 # ========================================================================================
 with tab1:
     if df_filtered.empty:
@@ -624,117 +617,113 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Compact Metrics Row
-        col1, col2, col3, col4 = st.columns(4)
+        # Mobile-optimized metrics - 2x2 grid
+        col1, col2 = st.columns(2)
         
         with col1:
             st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">⚖️</div>
-                <div class="metric-value-small">{df_filtered['จำนวนยาง'].sum():,.0f}</div>
-                <div class="metric-label-small">กิโลกรัม</div>
+            <div class="metric-card-mobile">
+                <div class="metric-icon-mobile">⚖️</div>
+                <div class="metric-value-mobile">{df_filtered['จำนวนยาง'].sum():,.0f}</div>
+                <div class="metric-label-mobile">กิโลกรัม</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="metric-card-mobile">
+                <div class="metric-icon-mobile">👥</div>
+                <div class="metric-value-mobile">{df_filtered['ชื่อลูกค้า'].count():,.0f}</div>
+                <div class="metric-label-mobile">ลูกค้าทั้งหมด</div>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">💰</div>
-                <div class="metric-value-small">฿{df_filtered['จำนวนเงิน'].sum():,.0f}</div>
-                <div class="metric-label-small">รายได้รวม</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">👥</div>
-                <div class="metric-value-small">{df_filtered['ชื่อลูกค้า'].count():,.0f}</div>
-                <div class="metric-label-small">ลูกค้าทั้งหมด</div>
+            <div class="metric-card-mobile">
+                <div class="metric-icon-mobile">💰</div>
+                <div class="metric-value-mobile">฿{df_filtered['จำนวนเงิน'].sum()/1000:.1f}K</div>
+                <div class="metric-label-mobile">รายได้รวม</div>
             </div>
             """, unsafe_allow_html=True)
             
-        with col4:
             avg_price = df_filtered['ราคา'].mean()
             st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">📊</div>
-                <div class="metric-value-small">฿{avg_price:,.1f}</div>
-                <div class="metric-label-small">ราคาเฉลี่ย</div>
+            <div class="metric-card-mobile">
+                <div class="metric-icon-mobile">📊</div>
+                <div class="metric-value-mobile">฿{avg_price:,.1f}</div>
+                <div class="metric-label-mobile">ราคาเฉลี่ย</div>
             </div>
             """, unsafe_allow_html=True)
 
-        # Charts in same row
-        col_chart1, col_chart2 = st.columns(2)
+        # Charts - Stack vertically on mobile
+        st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+        bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
+        if not bar_data.empty:
+            fig_bar = px.bar(
+                bar_data, 
+                x='สาขา', 
+                y='จำนวนยาง',
+                text='จำนวนยาง',
+                color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
+            )
+            fig_bar.update_traces(
+                texttemplate='%{text:.0f}',
+                textposition='outside',
+                textfont_size=10
+            )
+            fig_bar.update_layout(
+                height=250,
+                margin=dict(l=0, r=0, t=30, b=0),
+                title="จำนวนยางตามสาขา (กก.)",
+                title_font_size=12,
+                title_font_color='#2C3E50',
+                font_family="Prompt",
+                plot_bgcolor='rgba(255,255,255,0)',
+                paper_bgcolor='rgba(255,255,255,0)',
+                font_color='#2C3E50',
+                showlegend=False,
+                xaxis_title="",
+                yaxis_title="",
+                xaxis_tickfont_size=10,
+                yaxis_tickfont_size=10
+            )
+            fig_bar.update_xaxes(showgrid=False)
+            fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
+            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        with col_chart1:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-            if not bar_data.empty:
-                fig_bar = px.bar(
-                    bar_data, 
-                    x='สาขา', 
-                    y='จำนวนยาง',
-                    text='จำนวนยาง',
-                    color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
-                )
-                fig_bar.update_traces(
-                    texttemplate='%{text:.0f}',
-                    textposition='outside',
-                    textfont_size=11
-                )
-                fig_bar.update_layout(
-                    height=300,
-                    margin=dict(l=0, r=0, t=30, b=0),
-                    title="จำนวนยางตามสาขา (กก.)",
-                    title_font_size=14,
-                    title_font_color='#2C3E50',
-                    font_family="Prompt",
-                    plot_bgcolor='rgba(255,255,255,0)',
-                    paper_bgcolor='rgba(255,255,255,0)',
-                    font_color='#2C3E50',
-                    showlegend=False,
-                    xaxis_title="",
-                    yaxis_title=""
-                )
-                fig_bar.update_xaxes(showgrid=False)
-                fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
-                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col_chart2:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
-            if not pie_data.empty:
-                fig_pie = px.pie(
-                    pie_data, 
-                    values='จำนวนเงิน', 
-                    names='สาขา', 
-                    hole=0.5,
-                    color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0', '#FCE4EC']
-                )
-                fig_pie.update_traces(
-                    textposition='inside',
-                    textinfo='percent+label',
-                    textfont_size=11
-                )
-                fig_pie.update_layout(
-                    height=300,
-                    margin=dict(l=0, r=0, t=30, b=0),
-                    title="สัดส่วนรายได้ตามสาขา",
-                    title_font_size=14,
-                    title_font_color='#2C3E50',
-                    font_family="Prompt",
-                    plot_bgcolor='rgba(255,255,255,0)',
-                    paper_bgcolor='rgba(255,255,255,0)',
-                    font_color='#2C3E50',
-                    showlegend=False
-                )
-                st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+        pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
+        if not pie_data.empty:
+            fig_pie = px.pie(
+                pie_data, 
+                values='จำนวนเงิน', 
+                names='สาขา', 
+                hole=0.5,
+                color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0', '#FCE4EC']
+            )
+            fig_pie.update_traces(
+                textposition='inside',
+                textinfo='percent+label',
+                textfont_size=10
+            )
+            fig_pie.update_layout(
+                height=250,
+                margin=dict(l=0, r=0, t=30, b=0),
+                title="สัดส่วนรายได้ตามสาขา",
+                title_font_size=12,
+                title_font_color='#2C3E50',
+                font_family="Prompt",
+                plot_bgcolor='rgba(255,255,255,0)',
+                paper_bgcolor='rgba(255,255,255,0)',
+                font_color='#2C3E50',
+                showlegend=False
+            )
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================================================
-# TAB 2: Summary
+# TAB 2: Summary (Mobile Optimized)
 # ========================================================================================
 with tab2:
     if df_filtered.empty:
@@ -745,80 +734,72 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
     else:
-        col_summary1, col_summary2 = st.columns(2)
-        
-        with col_summary1:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
-            by_gong = df_filtered.groupby('กอง').agg({
-                'จำนวนยาง': 'sum', 
-                'จำนวนเงิน': 'sum', 
-                'ชื่อลูกค้า': 'count'
-            }).reset_index()
-            by_gong = by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'})
-            by_gong['จำนวนยาง'] = by_gong['จำนวนยาง'].round(1)
-            by_gong['จำนวนเงิน'] = by_gong['จำนวนเงิน'].round(0)
-            st.dataframe(by_gong, use_container_width=True, height=200)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Stack tables vertically on mobile
+        st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+        st.markdown('<h3 style="color: #2C3E50; font-size: 1rem; margin-bottom: 0.8rem;">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
+        by_gong = df_filtered.groupby('กอง').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count'
+        }).reset_index()
+        by_gong = by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'})
+        by_gong['จำนวนยาง'] = by_gong['จำนวนยาง'].round(1)
+        by_gong['จำนวนเงิน'] = by_gong['จำนวนเงิน'].round(0)
+        st.dataframe(by_gong, use_container_width=True, height=150)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with col_summary2:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
-            by_branch = df_filtered.groupby('สาขา').agg({
-                'จำนวนยาง': 'sum', 
-                'จำนวนเงิน': 'sum', 
-                'ชื่อลูกค้า': 'count', 
-                'ราคา': 'mean'
-            }).reset_index()
-            by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
-            by_branch['จำนวนยาง'] = by_branch['จำนวนยาง'].round(1)
-            by_branch['จำนวนเงิน'] = by_branch['จำนวนเงิน'].round(0)
-            by_branch['ราคาเฉลี่ย'] = by_branch['ราคาเฉลี่ย'].round(2)
-            st.dataframe(by_branch, use_container_width=True, height=200)
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+        st.markdown('<h3 style="color: #2C3E50; font-size: 1rem; margin-bottom: 0.8rem;">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
+        by_branch = df_filtered.groupby('สาขา').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count', 
+            'ราคา': 'mean'
+        }).reset_index()
+        by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
+        by_branch['จำนวนยาง'] = by_branch['จำนวนยาง'].round(1)
+        by_branch['จำนวนเงิน'] = by_branch['จำนวนเงิน'].round(0)
+        by_branch['ราคาเฉลี่ย'] = by_branch['ราคาเฉลี่ย'].round(2)
+        st.dataframe(by_branch, use_container_width=True, height=150)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # Additional Analysis
-        st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">📈 การวิเคราะห์เพิ่มเติม</h3>', unsafe_allow_html=True)
+        # Mobile-optimized analysis cards
+        st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+        st.markdown('<h3 style="color: #2C3E50; font-size: 1rem; margin-bottom: 0.8rem;">📈 การวิเคราะห์เพิ่มเติม</h3>', unsafe_allow_html=True)
         
-        col_analysis1, col_analysis2, col_analysis3 = st.columns(3)
-        
-        with col_analysis1:
-            top_customer = df_filtered.nlargest(1, 'จำนวนยาง')
-            if not top_customer.empty:
-                st.markdown(f"""
-                <div style='background: #E8F5E9; padding: 1rem; border-radius: 8px; border: 1px solid #C8E6C9;'>
-                    <h4 style='color: #2E7D32; margin: 0; font-size: 0.9rem;'>🏆 ลูกค้ายอดสูงสุด</h4>
-                    <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #1B5E20;'>{top_customer.iloc[0]['ชื่อลูกค้า']}</p>
-                    <p style='margin: 0; color: #388E3C; font-size: 0.85rem;'>{top_customer.iloc[0]['จำนวนยาง']:,.1f} กก.</p>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        with col_analysis2:
-            price_range = df_filtered['ราคา'].max() - df_filtered['ราคา'].min()
+        # Stack analysis cards vertically on mobile
+        top_customer = df_filtered.nlargest(1, 'จำนวนยาง')
+        if not top_customer.empty:
             st.markdown(f"""
-            <div style='background: #E3F2FD; padding: 1rem; border-radius: 8px; border: 1px solid #BBDEFB;'>
-                <h4 style='color: #1565C0; margin: 0; font-size: 0.9rem;'>📊 ช่วงราคา</h4>
-                <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #0D47A1;'>฿{df_filtered['ราคา'].min():.2f} - ฿{df_filtered['ราคา'].max():.2f}</p>
-                <p style='margin: 0; color: #1976D2; font-size: 0.85rem;'>ต่างกัน ฿{price_range:.2f}</p>
+            <div style='background: #E8F5E9; padding: 0.8rem; border-radius: 6px; border: 1px solid #C8E6C9; margin-bottom: 0.5rem;'>
+                <h4 style='color: #2E7D32; margin: 0; font-size: 0.85rem;'>🏆 ลูกค้ายอดสูงสุด</h4>
+                <p style='margin: 0.3rem 0 0 0; font-weight: 600; color: #1B5E20; font-size: 0.9rem; word-wrap: break-word;'>{top_customer.iloc[0]['ชื่อลูกค้า']}</p>
+                <p style='margin: 0; color: #388E3C; font-size: 0.8rem;'>{top_customer.iloc[0]['จำนวนยาง']:,.1f} กก.</p>
             </div>
             """, unsafe_allow_html=True)
         
-        with col_analysis3:
-            total_branches = df_filtered['สาขา'].nunique()
-            total_groups = df_filtered['กอง'].nunique()
-            st.markdown(f"""
-            <div style='background: #F3E5F5; padding: 1rem; border-radius: 8px; border: 1px solid #E1BEE7;'>
-                <h4 style='color: #6A1B9A; margin: 0; font-size: 0.9rem;'>🏢 ความครอบคลุม</h4>
-                <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #4A148C;'>{total_branches} สาขา</p>
-                <p style='margin: 0; color: #7B1FA2; font-size: 0.85rem;'>{total_groups} กอง</p>
-            </div>
-            """, unsafe_allow_html=True)
+        price_range = df_filtered['ราคา'].max() - df_filtered['ราคา'].min()
+        st.markdown(f"""
+        <div style='background: #E3F2FD; padding: 0.8rem; border-radius: 6px; border: 1px solid #BBDEFB; margin-bottom: 0.5rem;'>
+            <h4 style='color: #1565C0; margin: 0; font-size: 0.85rem;'>📊 ช่วงราคา</h4>
+            <p style='margin: 0.3rem 0 0 0; font-weight: 600; color: #0D47A1; font-size: 0.9rem;'>฿{df_filtered['ราคา'].min():.2f} - ฿{df_filtered['ราคา'].max():.2f}</p>
+            <p style='margin: 0; color: #1976D2; font-size: 0.8rem;'>ต่างกัน ฿{price_range:.2f}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        total_branches = df_filtered['สาขา'].nunique()
+        total_groups = df_filtered['กอง'].nunique()
+        st.markdown(f"""
+        <div style='background: #F3E5F5; padding: 0.8rem; border-radius: 6px; border: 1px solid #E1BEE7;'>
+            <h4 style='color: #6A1B9A; margin: 0; font-size: 0.85rem;'>🏢 ความครอบคลุม</h4>
+            <p style='margin: 0.3rem 0 0 0; font-weight: 600; color: #4A148C; font-size: 0.9rem;'>{total_branches} สาขา, {total_groups} กอง</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================================================
-# TAB 3: Detailed List
+# TAB 3: Detailed List (Mobile Optimized)
 # ========================================================================================
 with tab3:
     if df_filtered.empty:
@@ -832,11 +813,9 @@ with tab3:
         st.markdown('<div class="search-container">', unsafe_allow_html=True)
         st.markdown('<h3>📋 รายการลูกค้าทั้งหมด</h3>', unsafe_allow_html=True)
         
-        col_search1, col_search2 = st.columns([3, 1])
-        with col_search1:
-            keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า", placeholder="กรอกชื่อลูกค้าที่ต้องการค้นหา...", label_visibility="collapsed")
-        with col_search2:
-            sort_by = st.selectbox("เรียงตาม", ["จำนวนยาง", "จำนวนเงิน", "ชื่อลูกค้า"], label_visibility="collapsed")
+        # Stack search inputs vertically on mobile
+        keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า", placeholder="กรอกชื่อลูกค้า...", label_visibility="collapsed")
+        sort_by = st.selectbox("เรียงตาม", ["จำนวนยาง", "จำนวนเงิน", "ชื่อลูกค้า"], label_visibility="collapsed")
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -864,23 +843,25 @@ with tab3:
         else:
             # Display summary
             st.markdown(f"""
-            <div style='background: #F5F5F5; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;'>
-                <span style='color: #2C3E50; font-weight: 500;'>พบข้อมูล {len(result_df)} รายการ</span>
-                <span style='color: #666; font-size: 0.9rem;'>รวม {result_df['จำนวนยาง'].sum():,.1f} กก. | ฿{result_df['จำนวนเงิน'].sum():,.0f}</span>
+            <div style='background: #F5F5F5; padding: 0.6rem; border-radius: 6px; margin-bottom: 0.8rem;'>
+                <div style='display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;'>
+                    <span style='color: #2C3E50; font-weight: 500; font-size: 0.85rem;'>พบ {len(result_df)} รายการ</span>
+                    <span style='color: #666; font-size: 0.8rem;'>{result_df['จำนวนยาง'].sum():,.0f} กก. | ฿{result_df['จำนวนเงิน'].sum():,.0f}</span>
+                </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Prepare display dataframe
+            # Prepare display dataframe with mobile-friendly columns
             result_df = result_df.reset_index(drop=True)
-            display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']].copy()
+            # Show only essential columns on mobile
+            display_df = result_df[['ชื่อลูกค้า', 'จำนวนยาง', 'จำนวนเงิน', 'สาขา']].copy()
             
             # Format numbers
-            display_df['จำนวนยาง'] = display_df['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
-            display_df['ราคา'] = display_df['ราคา'].apply(lambda x: f"{x:,.2f}")
-            display_df['จำนวนเงิน'] = display_df['จำนวนเงิน'].apply(lambda x: f"{x:,.0f}")
+            display_df['จำนวนยาง'] = display_df['จำนวนยาง'].apply(lambda x: f"{x:,.0f}")
+            display_df['จำนวนเงิน'] = display_df['จำนวนเงิน'].apply(lambda x: f"฿{x:,.0f}")
             
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.dataframe(display_df, use_container_width=True, height=400)
+            st.markdown('<div class="chart-container-mobile">', unsafe_allow_html=True)
+            st.dataframe(display_df, use_container_width=True, height=300)
             st.markdown('</div>', unsafe_allow_html=True)
 
             # Download button
@@ -898,7 +879,7 @@ with tab3:
 # ========================================================================================
 st.markdown(f"""
 <div class="footer">
-    <p>🌳 ลิตาการยาง Dashboard © 2025 | อัปเดตล่าสุด: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}</p>
-    <p>Developed with Strategic Excellence for Operational Efficiency</p>
+    <p>🌳 ลิตาการยาง Dashboard © 2025</p>
+    <p>อัปเดต: {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
 </div>
 """, unsafe_allow_html=True)
