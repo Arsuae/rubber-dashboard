@@ -20,242 +20,159 @@ st.set_page_config(
 # ========================================================================================
 # CUSTOM CSS
 # ========================================================================================
+# ========================================================================================
+# CUSTOM CSS (Minimal + Pastel)
+# ========================================================================================
 st.markdown("""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
-    
-    /* Global Styles */
-    .stApp {
-        font-family: 'Noto Sans Thai', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* Header Styles */
-    .header-container {
-        background: linear-gradient(135deg, #2a4d69 0%, #1e3a5f 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    .header-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: white;
-        margin: 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .header-subtitle {
-        font-size: 1.2rem;
-        color: rgba(255,255,255,0.9);
-        margin: 0.5rem 0 0 0;
-        font-weight: 300;
-    }
-    
-    /* Sidebar Styles */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #2a4d69 0%, #1e3a5f 100%);
-    }
-    
-    .sidebar-section {
-        background: rgba(255,255,255,0.1);
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(255,255,255,0.2);
-        backdrop-filter: blur(10px);
-    }
-    
-    .sidebar-title {
-        color: white;
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-    
-    .employee-card {
-        background: rgba(255,255,255,0.15);
-        padding: 0.8rem;
-        border-radius: 10px;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid #4CAF50;
-        transition: all 0.3s ease;
-    }
-    
-    .employee-card:hover {
-        background: rgba(255,255,255,0.2);
-        transform: translateX(5px);
-    }
-    
-    .employee-offline {
-        border-left-color: #f44336;
-    }
-    
-    .employee-done {
-        border-left-color: #2196F3;
-    }
-    
-    .employee-late {
-        border-left-color: #f2994a;
-    }
-    
-    .employee-leave {
-        border-left-color: #667eea;
-    }
-    
-    /* Tab Styles */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 1rem;
-        background: rgba(255,255,255,0.1);
-        padding: 0.5rem;
-        border-radius: 15px;
-        backdrop-filter: blur(10px);
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background: rgba(255,255,255,0.2);
-        border-radius: 10px;
-        padding: 0.8rem 1.5rem;
-        border: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(255,255,255,0.3);
-        transform: translateY(-2px);
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-        box-shadow: 0 5px 15px rgba(76,175,80,0.3);
-    }
-    
-    /* Metric Cards */
-    .metric-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        border: 1px solid rgba(255,255,255,0.8);
-        text-align: center;
-        transition: all 0.3s ease;
-        margin-bottom: 1rem;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-    }
-    
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #2a4d69;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-label {
-        font-size: 1.1rem;
-        color: #666;
-        font-weight: 500;
-    }
-    
-    .metric-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-    }
-    
-    /* Chart Container */
-    .chart-container {
-        background: rgba(255,255,255,0.95);
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255,255,255,0.8);
-    }
-    
-    .chart-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2a4d69;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-    
-    /* Data Table */
-    .dataframe {
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-    
-    /* Search Box */
-    .search-container {
-        background: rgba(255,255,255,0.95);
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    /* Footer */
-    .footer {
-        background: rgba(255,255,255,0.1);
-        padding: 1.5rem;
-        border-radius: 15px;
-        text-align: center;
-        color: rgba(255,255,255,0.8);
-        margin-top: 2rem;
-        backdrop-filter: blur(10px);
-    }
-    
-    /* Warning and Info Boxes */
-    .stAlert {
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    /* Buttons */
-    .stButton button {
-        border-radius: 10px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-    
-    /* Download Button */
-    .stDownloadButton button {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 500;
-        padding: 0.8rem 2rem;
-        transition: all 0.3s ease;
-    }
-    
-    .stDownloadButton button:hover {
-        background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(76,175,80,0.3);
-    }
+  /* Import Google Font */
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+  /* Global */
+  .stApp {
+    font-family: 'Poppins', sans-serif;
+    background-color: #FDFDFD;
+    color: #333333;
+  }
+  .block-container {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: auto;
+  }
+
+  /* Sidebar */
+  .css-1d391kg {
+    background-color: #FFFFFF !important;
+    border-right: 1px solid #E0E0E0;
+  }
+  .sidebar-section {
+    background-color: #FAFAFA;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid #E0E0E0;
+  }
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Header */
+  .header-container {
+    background-color: #FFF5E6;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #FFE0B2;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  .header-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+  .header-subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin-top: 0.5rem;
+  }
+
+  /* Tabs */
+  .stTabs [data-baseweb="tab-list"] {
+    background-color: transparent;
+    margin-bottom: 1rem;
+  }
+  .stTabs [data-baseweb="tab"] {
+    background-color: #FAFAFA;
+    border: 1px solid #E0E0E0;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    color: #555;
+  }
+  .stTabs [aria-selected="true"] {
+    background-color: #FFE0B2;
+    border-color: #FFCC80;
+    color: #333;
+  }
+
+  /* Metric Cards */
+  .metric-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .metric-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .metric-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #333;
+  }
+  .metric-label {
+    font-size: 0.9rem;
+    color: #777;
+  }
+
+  /* Chart Container */
+  .chart-container {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  /* Dataframe/Table */
+  .dataframe {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #E0E0E0;
+  }
+
+  /* Search Container */
+  .search-container {
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Buttons */
+  .stButton>button, .stDownloadButton>button {
+    background-color: #FFCC80;
+    color: #333;
+    border: 1px solid #FFB74D;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+  }
+  .stButton>button:hover, .stDownloadButton>button:hover {
+    background-color: #FFB74D;
+    border-color: #FFA726;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    color: #777;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+  }
 </style>
 """, unsafe_allow_html=True)
 
