@@ -18,18 +18,19 @@ st.set_page_config(
 )
 
 # ========================================================================================
-# CUSTOM CSS (Cute Minimal + Pastel)
+# CUSTOM CSS (Improved Visibility & Professional Design)
 # ========================================================================================
 st.markdown("""
 <style>
   /* Import Google Fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&family=Kanit:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap');
 
   /* Global */
   .stApp {
     font-family: 'Prompt', 'Kanit', sans-serif;
     background: linear-gradient(to bottom, #FFF9F3 0%, #F5F3FF 100%);
     min-height: 100vh;
+    color: #2C3E50; /* Darker base text color for better readability */
   }
   
   .block-container {
@@ -45,7 +46,7 @@ st.markdown("""
   }
   
   .sidebar-section {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     padding: 1.2rem;
     margin-bottom: 1rem;
     border-radius: 16px;
@@ -54,14 +55,11 @@ st.markdown("""
   }
   
   .sidebar-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #7B68EE;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2C3E50; /* Dark color for better visibility */
     margin-bottom: 0.8rem;
     text-align: center;
-    background: linear-gradient(90deg, #FF6B9D, #C44569);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
 
   /* Employee Cards */
@@ -73,6 +71,16 @@ st.markdown("""
     border: 2px solid #FFD93D;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    color: #2C3E50; /* Dark text */
+  }
+  
+  .employee-card b {
+    color: #1A252F; /* Even darker for names */
+    font-weight: 600;
+  }
+  
+  .employee-card small {
+    color: #34495E; /* Readable secondary text */
   }
   
   .employee-card:hover {
@@ -143,24 +151,22 @@ st.markdown("""
   
   .header-title {
     font-size: 2.2rem;
-    font-weight: 600;
-    background: linear-gradient(90deg, #FF6B9D, #C44569, #7B68EE);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    color: #2C3E50; /* Dark color for main title */
     margin: 0;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
   }
   
   .header-subtitle {
-    font-size: 1rem;
-    color: #8B7DA7;
+    font-size: 1.1rem;
+    color: #34495E; /* Darker subtitle */
     margin-top: 0.5rem;
-    font-weight: 400;
+    font-weight: 500;
   }
 
   /* Tabs */
   .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 16px;
     padding: 0.5rem;
     margin-bottom: 1.5rem;
@@ -172,8 +178,8 @@ st.markdown("""
     border: 2px solid #FFE0EC;
     border-radius: 12px;
     padding: 0.6rem 1.2rem;
-    color: #7B68EE;
-    font-weight: 500;
+    color: #2C3E50; /* Dark text for tabs */
+    font-weight: 600;
     transition: all 0.3s ease;
   }
   
@@ -185,7 +191,7 @@ st.markdown("""
   .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
     border-color: #FF69B4;
-    color: white;
+    color: #FFFFFF; /* White text on active tab */
     box-shadow: 0 6px 16px rgba(255, 105, 180, 0.3);
   }
 
@@ -214,17 +220,15 @@ st.markdown("""
   
   .metric-value {
     font-size: 2rem;
-    font-weight: 600;
-    background: linear-gradient(90deg, #FF6B9D, #C44569);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    color: #E91E63; /* Strong pink color for values */
     margin-bottom: 0.3rem;
   }
   
   .metric-label {
-    font-size: 0.95rem;
-    color: #8B7DA7;
-    font-weight: 500;
+    font-size: 1rem;
+    color: #2C3E50; /* Dark label text */
+    font-weight: 600;
   }
 
   /* Chart Container */
@@ -239,8 +243,8 @@ st.markdown("""
   
   .chart-title {
     font-size: 1.3rem;
-    font-weight: 600;
-    color: #7B68EE;
+    font-weight: 700;
+    color: #2C3E50; /* Dark chart titles */
     margin-bottom: 1.2rem;
     text-align: center;
     display: flex;
@@ -255,11 +259,13 @@ st.markdown("""
     overflow: hidden;
     border: 2px solid #FFE0EC !important;
     background: white;
+    color: #2C3E50; /* Dark table text */
   }
   
   .dataframe thead {
     background: linear-gradient(90deg, #FFB6C1, #DDA0DD);
     color: white;
+    font-weight: 600;
   }
   
   .dataframe tbody tr:nth-child(even) {
@@ -268,6 +274,11 @@ st.markdown("""
   
   .dataframe tbody tr:hover {
     background: #FFE0EC;
+  }
+  
+  .dataframe td, .dataframe th {
+    color: #2C3E50 !important; /* Ensure table text is dark */
+    font-weight: 500;
   }
 
   /* Search Container */
@@ -279,6 +290,11 @@ st.markdown("""
     margin-bottom: 1.5rem;
     box-shadow: 0 4px 12px rgba(255, 182, 193, 0.15);
   }
+  
+  .search-container h3 {
+    color: #2C3E50 !important; /* Dark search title */
+    font-weight: 600 !important;
+  }
 
   /* Input Fields */
   .stTextInput > div > div > input,
@@ -288,12 +304,20 @@ st.markdown("""
     border-radius: 12px !important;
     background: #FFF9FC !important;
     padding: 0.6rem !important;
+    color: #2C3E50 !important; /* Dark input text */
+    font-weight: 500 !important;
   }
   
   .stTextInput > div > div > input:focus,
   .stSelectbox > div > div > select:focus {
     border-color: #FF69B4 !important;
     box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.2) !important;
+  }
+  
+  /* Labels for inputs */
+  .stTextInput label, .stSelectbox label, .stMultiSelect label {
+    color: #2C3E50 !important;
+    font-weight: 600 !important;
   }
 
   /* Buttons */
@@ -303,7 +327,7 @@ st.markdown("""
     border: none;
     border-radius: 12px;
     padding: 0.6rem 1.5rem;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
   }
@@ -315,11 +339,11 @@ st.markdown("""
   
   .stDownloadButton > button {
     background: linear-gradient(135deg, #98FB98 0%, #90EE90 100%);
-    color: #2E7D32;
+    color: #1B5E20; /* Dark green text */
     border: 2px solid #90EE90;
     border-radius: 12px;
     padding: 0.6rem 1.5rem;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s ease;
   }
   
@@ -335,10 +359,15 @@ st.markdown("""
     border-radius: 16px;
     padding: 1.5rem;
     text-align: center;
-    color: #8B7DA7;
+    color: #2C3E50; /* Dark footer text */
     font-size: 0.9rem;
     margin-top: 2rem;
     box-shadow: 0 4px 12px rgba(255, 182, 193, 0.15);
+  }
+  
+  .footer p {
+    color: #2C3E50 !important;
+    font-weight: 500;
   }
 
   /* Alerts & Messages */
@@ -346,6 +375,24 @@ st.markdown("""
     border-radius: 12px;
     border: 2px solid #FFE0EC;
     background: linear-gradient(135deg, #FFF5F5 0%, #FFE0EC 100%);
+    color: #2C3E50 !important;
+  }
+  
+  /* Warning/Error messages */
+  .stAlert > div {
+    color: #2C3E50 !important;
+    font-weight: 500;
+  }
+
+  /* All text elements */
+  p, span, div, label {
+    color: #2C3E50;
+  }
+  
+  /* Ensure all headings are visible */
+  h1, h2, h3, h4, h5, h6 {
+    color: #2C3E50 !important;
+    font-weight: 600 !important;
   }
 
   /* Scrollbar */
@@ -374,7 +421,6 @@ st.markdown("""
   }
 </style>
 """, unsafe_allow_html=True)
-
 # ========================================================================================
 # LOAD DATA
 # ========================================================================================
