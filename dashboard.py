@@ -284,7 +284,8 @@ def load_employee_status_from_apps_script():
         # Google Apps Script Web App URL
         apps_script_url = 'https://script.google.com/macros/s/AKfycbwcURACTMc6xWy-0vPfxiuG4orie0Pp0UafiNIA57uebo33YRvDiUleqihfZ_rw3B1PKw/exec'
         
-        response = requests.get(apps_script_url, timeout=10)
+        response = requests.get(apps_script_url, timeout=(5, 30))
+
         if response.status_code == 200:
             data = response.json()
             if data.get('success'):
