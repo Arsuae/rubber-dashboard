@@ -18,119 +18,133 @@ st.set_page_config(
 )
 
 # ========================================================================================
-# CUSTOM CSS - Pastel Minimal Style
+# CUSTOM CSS - Refined Pastel UI
 # ========================================================================================
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
 
     html, body, .stApp {
-        font-family: 'Prompt', sans-serif;
-        background-color: #f9f9f9;
+        font-family: 'Sarabun', sans-serif;
+        background-color: #f0f4f8;
         color: #333;
     }
 
     .header-container {
         background: #ffffff;
-        padding: 2rem;
-        border-radius: 1.5rem;
+        padding: 2rem 2.5rem;
+        border-radius: 2rem;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
     }
 
     .header-title {
-        font-size: 2.2rem;
-        font-weight: 600;
-        color: #4a4a4a;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d2d2d;
+        margin-bottom: 0.2rem;
     }
 
     .header-subtitle {
-        font-size: 1rem;
-        color: #999;
-        margin-top: 0.3rem;
+        font-size: 1.1rem;
+        color: #888;
     }
 
     .sidebar-section {
         background: #ffffff;
-        padding: 1.5rem;
-        border-radius: 1.2rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #eee;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        padding: 1.8rem;
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
 
     .sidebar-title {
-        color: #333;
-        font-size: 1.1rem;
+        color: #2a4365;
+        font-size: 1.2rem;
         font-weight: 600;
-        margin-bottom: 1rem;
+        margin-bottom: 1.2rem;
         text-align: center;
     }
 
     .employee-card {
-        background: #f2f6ff;
-        padding: 0.8rem 1rem;
-        border-radius: 0.8rem;
-        margin-bottom: 0.6rem;
-        border-left: 6px solid #a3c4f3;
+        background: #fdfdff;
+        padding: 1rem 1.2rem;
+        border-radius: 1rem;
+        margin-bottom: 0.7rem;
+        border-left: 6px solid #a0aec0;
+        transition: all 0.2s ease;
+    }
+    .employee-card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     }
 
-    .employee-offline { border-left-color: #f8b6b8; background: #fff2f2; }
-    .employee-done    { border-left-color: #a3f7bf; background: #f2fff7; }
-    .employee-late    { border-left-color: #ffe28a; background: #fffbee; }
-    .employee-leave   { border-left-color: #c4b5fd; background: #f8f6ff; }
+    .employee-offline { border-left-color: #feb2b2; background: #fff5f5; }
+    .employee-done    { border-left-color: #9ae6b4; background: #f0fff4; }
+    .employee-late    { border-left-color: #faf089; background: #fffff0; }
+    .employee-leave   { border-left-color: #d6bcfa; background: #faf5ff; }
 
     .metric-card {
-        background: #ffffff;
-        border-radius: 1.2rem;
-        padding: 1.5rem;
+        background: linear-gradient(145deg, #ffffff, #f1f5f9);
+        border-radius: 1.5rem;
+        padding: 2rem;
         text-align: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-        margin-bottom: 1rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.06);
     }
 
     .metric-value {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #4a4a4a;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #2b6cb0;
     }
 
     .metric-label {
-        font-size: 0.95rem;
-        color: #888;
+        font-size: 1rem;
+        color: #718096;
+        font-weight: 500;
     }
 
     .chart-container {
         background: #ffffff;
-        border-radius: 1.2rem;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
     }
 
     .chart-title {
-        font-size: 1.25rem;
-        font-weight: 500;
-        color: #444;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2a4365;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
 
     .search-container, .footer {
         background: #ffffff;
-        padding: 1.5rem;
-        border-radius: 1rem;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        padding: 2rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
 
     .footer {
         text-align: center;
-        font-size: 0.9rem;
-        color: #aaa;
-        margin-top: 3rem;
+        font-size: 0.95rem;
+        color: #a0aec0;
+        margin-top: 4rem;
     }
 </style>
 """, unsafe_allow_html=True)
+
+# จากตรงนี้ไป (streamlit logic) ไม่ต้องเปลี่ยน UI
+# เพราะ CSS ถูกแก้แล้วทั้งหมดด้านบน
 
 # ========================================================================================
 # LOAD DATA
