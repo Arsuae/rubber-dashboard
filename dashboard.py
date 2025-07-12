@@ -1,491 +1,718 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime, date, time
-import io
-import requests
-import json
-
-# ========================================================================================
-# CONFIG
-# ========================================================================================
-st.set_page_config(
-    page_title="ลิตาการยาง Dashboard",
-    page_icon="🌳",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ========================================================================================
-# CUSTOM CSS - Refined Pastel UI with Fixes
-# ========================================================================================
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap');
-
-    html, body, .stApp {
-        font-family: 'Sarabun', sans-serif;
-        background-color: #f0f4f8;
-        color: #333;
-    }
-
-    .header-container {
-        background: #ffffff;
-        padding: 2rem 2.5rem;
-        border-radius: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
-    }
-
-    .header-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #2d2d2d;
-        margin-bottom: 0.2rem;
-    }
-
-    .header-subtitle {
-        font-size: 1.1rem;
-        color: #888;
-    }
-
-    .sidebar-section {
-        background: transparent;
-        padding: 1rem 1rem 0.5rem 1rem;
-        border-left: 3px solid #ccc;
-        border-radius: 0;
-        margin-bottom: 1.5rem;
-    }
-
-    .sidebar-title {
-        color: #2a4365;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-
-    .employee-card {
-        background: #fdfdff;
-        padding: 1rem 1.2rem;
-        border-radius: 0.8rem;
-        margin-bottom: 0.7rem;
-        border-left: 4px solid #a0aec0;
-        transition: all 0.2s ease;
-    }
-    .employee-card:hover {
-        transform: scale(1.01);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-
-    .employee-offline { border-left-color: #feb2b2; background: #fff5f5; }
-    .employee-done    { border-left-color: #9ae6b4; background: #f0fff4; }
-    .employee-late    { border-left-color: #faf089; background: #fffff0; }
-    .employee-leave   { border-left-color: #d6bcfa; background: #faf5ff; }
-
-    .metric-card {
-        background: linear-gradient(145deg, #ffffff, #f1f5f9);
-        border-radius: 1.5rem;
-        padding: 2rem;
-        text-align: center;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
-        margin-bottom: 1.5rem;
-        transition: all 0.3s ease;
-    }
-    .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-    }
-
-    .metric-value {
-        font-size: 2.6rem;
-        font-weight: 700;
-        color: #2b6cb0;
-    }
-
-    .metric-label {
-        font-size: 1rem;
-        color: #718096;
-        font-weight: 500;
-    }
-
-    .chart-container {
-        background: transparent;
-        border-left: 3px solid #ccc;
-        border-radius: 0;
-        padding: 2rem 1rem;
-        margin-bottom: 2.5rem;
-    }
-
-    .chart-title {
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: #2a4365;
-        text-align: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .search-container, .footer {
-        background: transparent;
-        border-left: 3px solid #ccc;
-        border-radius: 0;
-        padding: 1.2rem;
-    }
-
-    .footer {
-        text-align: center;
-        font-size: 0.9rem;
-        color: #6b7280;
-        margin-top: 3rem;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# จากตรงนี้ไป (streamlit logic) ไม่ต้องเปลี่ยน UI
-# เพราะ CSS ถูกแก้แล้วทั้งหมดด้านบน
-
-# ========================================================================================
-# LOAD DATA
-# ========================================================================================
-@st.cache_data(ttl=300)
-def load_data():
-    try:
-        url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
-        df = pd.read_csv(url, header=None)
-        df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
-        df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
-        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        return df
-    except Exception as e:
-        st.error(f"ไม่สามารถโหลดข้อมูลได้: {str(e)}")
-        return pd.DataFrame()
-
-@st.cache_data(ttl=60)  # Cache for 1 minute since employee status changes frequently
-def load_employee_status_from_apps_script():
-    """Load employee status from Google Apps Script API"""
-    try:
-        # Google Apps Script Web App URL
-        apps_script_url = 'https://script.google.com/macros/s/AKfycbwcURACTMc6xWy-0vPfxiuG4orie0Pp0UafiNIA57uebo33YRvDiUleqihfZ_rw3B1PKw/exec'
-        
-        response = requests.get(apps_script_url, timeout=(5, 30))
-
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                employees = data.get('data', [])
-                # Convert to DataFrame
-                emp_df = pd.DataFrame(employees)
-                if not emp_df.empty:
-                    emp_df = emp_df[['name', 'status', 'time']].rename(columns={
-                        'name': 'ชื่อพนักงาน',
-                        'status': 'สถานะ',
-                        'time': 'เวลา'
-                    })
-                    return emp_df
-        
-        # Return empty DataFrame if failed
-        return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ", "เวลา"])
-        
-    except Exception as e:
-        st.error(f"ไม่สามารถโหลดข้อมูลพนักงานได้: {str(e)}")
-        return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ", "เวลา"])
-
-# ========================================================================================
-# STATE HANDLING
-# ========================================================================================
-if 'tab' not in st.session_state:
-    st.session_state.tab = "📁 รายการ"
-if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = date.today()
-if 'selected_branches' not in st.session_state:
-    st.session_state.selected_branches = []
-if 'selected_groups' not in st.session_state:
-    st.session_state.selected_groups = []
-
-# ========================================================================================
-# SIDEBAR CONTROLS
-# ========================================================================================
-with st.sidebar:
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<h3 class="sidebar-title">🎛️ ตัวกรองข้อมูล</h3>', unsafe_allow_html=True)
-    
-    selected_date = st.date_input("📅 เลือกวันที่", value=st.session_state.selected_date)
-    st.session_state.selected_date = selected_date
-
-    df = load_data()
-    
-    if not df.empty:
-        branches = df['สาขา'].dropna().unique().tolist()
-        selected_branches = st.multiselect("🏢 เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
-        st.session_state.selected_branches = selected_branches
-
-        groups = df['กอง'].dropna().unique().tolist()
-        if "กอง3" not in groups:
-            groups.append("กอง3")
-        selected_groups = st.multiselect("📦 เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
-        st.session_state.selected_groups = selected_groups
-    else:
-        st.error("ไม่มีข้อมูลให้แสดง")
-        st.session_state.selected_branches = []
-        st.session_state.selected_groups = []
-
-    if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Employee Status Section
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<h3 class="sidebar-title">👨‍🌾 พนักงาน</h3>', unsafe_allow_html=True)
-    
-    # Load employee data from Google Apps Script
-    emp_df = load_employee_status_from_apps_script()
-    
-    if not emp_df.empty:
-        # Count status
-        status_counts = {
-            'มาทำงาน': 0,
-            'มาสาย': 0,
-            'ลา': 0,
-            'ขาด': 0
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลิตาการยาง - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        for _, row in emp_df.iterrows():
-            status = row['สถานะ']
-            if status in status_counts:
-                status_counts[status] += 1
-        
-        # Display summary
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f"<div style='text-align: center; color: #4CAF50;'><b>{status_counts['มาทำงาน']}</b><br>มาทำงาน</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; color: #f2994a;'><b>{status_counts['มาสาย']}</b><br>มาสาย</div>", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"<div style='text-align: center; color: #667eea;'><b>{status_counts['ลา']}</b><br>ลางาน</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; color: #f44336;'><b>{status_counts['ขาด']}</b><br>ขาดงาน</div>", unsafe_allow_html=True)
-        
-        st.markdown("<hr style='margin: 1rem 0; opacity: 0.3;'>", unsafe_allow_html=True)
-        
-        # Display individual employees
-        for _, row in emp_df.iterrows():
-            name = row['ชื่อพนักงาน']
-            status = row['สถานะ']
-            time_str = row.get('เวลา', '')
+
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background: linear-gradient(135deg, #faf7f4 0%, #f9f5f2 100%);
+            color: #4a4a4a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f2 100%);
+            padding: 2rem;
+            border-radius: 24px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #5a7ba8;
+            font-weight: 300;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.7);
+            padding: 0.5rem;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #6a7b8a;
+            background: transparent;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #b8e6d3 0%, #a8dcc6 100%);
+            color: #2d5a3d;
+            box-shadow: 0 4px 12px rgba(168,220,198,0.3);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.8);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.9);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .stat-card:nth-child(1) .stat-icon { color: #f4a6a6; }
+        .stat-card:nth-child(2) .stat-icon { color: #a6d4f4; }
+        .stat-card:nth-child(3) .stat-icon { color: #a6f4c4; }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2c5aa0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #6a7b8a;
+            font-weight: 400;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: #4a4a4a;
+            font-size: 0.9rem;
+        }
+
+        .filter-select {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid #e0e6ed;
+            background: rgba(255,255,255,0.9);
+            color: #4a4a4a;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #b8e6d3;
+            box-shadow: 0 0 0 3px rgba(184,230,211,0.2);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #b8e6d3 0%, #a8dcc6 100%);
+            color: #2d5a3d;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #a8dcc6 0%, #98d2b8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168,220,198,0.3);
+        }
+
+        /* Table */
+        .table-container {
+            background: rgba(255,255,255,0.9);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e9f2 100%);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2c5aa0;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table tr:hover {
+            background: rgba(184,230,211,0.1);
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid #e0e6ed;
+            background: rgba(255,255,255,0.9);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #b8e6d3;
+            box-shadow: 0 0 0 3px rgba(184,230,211,0.2);
+        }
+
+        /* Employee Status */
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .employee-card {
+            background: rgba(255,255,255,0.8);
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid #b8e6d3;
+            transition: all 0.3s ease;
+        }
+
+        .employee-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .employee-card.late { border-left-color: #f4d6a6; }
+        .employee-card.absent { border-left-color: #f4a6a6; }
+        .employee-card.leave { border-left-color: #d4a6f4; }
+
+        .employee-name {
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 0.3rem;
+        }
+
+        .employee-status {
+            font-size: 0.9rem;
+            color: #6a7b8a;
+        }
+
+        /* Chart placeholder */
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, #f9f5f2 0%, #f4f0ed 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6a7b8a;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
             
-            # Determine card class and status text based on status
-            if status == 'มาทำงาน':
-                status_text = f"🟢 มาทำงาน {time_str}"
-                card_class = "employee-card"
-            elif status == 'มาสาย':
-                status_text = f"🟡 มาสาย {time_str}"
-                card_class = "employee-card employee-late"
-            elif status == 'ลา':
-                status_text = "🟣 ลางาน"
-                card_class = "employee-card employee-leave"
-            else:  # ขาด
-                status_text = "🔴 ขาดงาน"
-                card_class = "employee-card employee-offline"
+            .header h1 {
+                font-size: 2rem;
+            }
             
-            st.markdown(f'<div class="{card_class}"><b>{name}</b><br><small>{status_text}</small></div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========================================================================================
-# FILTERED DATA
-# ========================================================================================
-if not df.empty and st.session_state.selected_branches and st.session_state.selected_groups:
-    df_filtered = df[
-        (df['วันที่'].dt.date == st.session_state.selected_date) &
-        (df['สาขา'].isin(st.session_state.selected_branches)) &
-        (df['กอง'].isin(st.session_state.selected_groups))
-    ]
-else:
-    df_filtered = pd.DataFrame()
-
-# ========================================================================================
-# HEADER
-# ========================================================================================
-st.markdown("""
-<div class="header-container">
-    <h1 class="header-title">🌳 ลิตาการยาง</h1>
-    <p class="header-subtitle">แดชบอร์ดข้อมูลยางพาราแบบเรียลไทม์</p>
-</div>
-""", unsafe_allow_html=True)
-
-# ========================================================================================
-# TABS
-# ========================================================================================
-tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุป", "📁 รายการ"])
-
-# ========================================================================================
-# TAB: ภาพรวม
-# ========================================================================================
-with tab1:
-    if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        # Metrics
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-icon">⚖️</div>
-                <div class="metric-value">{df_filtered['จำนวนยาง'].sum():,.1f}</div>
-                <div class="metric-label">กิโลกรัม</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-icon">💰</div>
-                <div class="metric-value">฿{df_filtered['จำนวนเงิน'].sum():,.0f}</div>
-                <div class="metric-label">รายได้รวม</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-icon">👥</div>
-                <div class="metric-value">{df_filtered['ชื่อลูกค้า'].count():,.0f}</div>
-                <div class="metric-label">ลูกค้าทั้งหมด</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Charts
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.markdown('<h3 class="chart-title">🏢 จำนวนยางตามสาขา</h3>', unsafe_allow_html=True)
-        bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-        if not bar_data.empty:
-            fig_bar = px.bar(
-                bar_data, 
-                x='สาขา', 
-                y='จำนวนยาง', 
-                text='จำนวนยาง',
-                color='จำนวนยาง',
-                color_continuous_scale='Viridis'
-            )
-            fig_bar.update_traces(texttemplate='%{text:.1f} กก.', textposition='outside')
-            fig_bar.update_layout(
-                font_family="Noto Sans Thai",
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font_color='#2a4d69'
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.markdown('<h3 class="chart-title">💰 สัดส่วนรายได้</h3>', unsafe_allow_html=True)
-        pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
-        if not pie_data.empty:
-            fig_pie = px.pie(
-                pie_data, 
-                values='จำนวนเงิน', 
-                names='สาขา', 
-                hole=0.4,
-                color_discrete_sequence=px.colors.qualitative.Set3
-            )
-            fig_pie.update_traces(textinfo='percent+label')
-            fig_pie.update_layout(
-                font_family="Noto Sans Thai",
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font_color='#2a4d69'
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# ========================================================================================
-# TAB: สรุป
-# ========================================================================================
-with tab2:
-    if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.markdown('<h3 class="chart-title">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
-        by_gong = df_filtered.groupby('กอง').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count'}).reset_index()
-        st.dataframe(by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'}), use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.markdown('<h3 class="chart-title">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
-        by_branch = df_filtered.groupby('สาขา').agg({'จำนวนยาง': 'sum', 'จำนวนเงิน': 'sum', 'ชื่อลูกค้า': 'count', 'ราคา': 'mean'}).reset_index()
-        by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
-        st.dataframe(by_branch, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-# ========================================================================================
-# TAB: รายการ
-# ========================================================================================
-with tab3:
-    if df_filtered.empty:
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.1); border-radius: 20px; margin: 2rem 0;">
-            <h3 style="color: white; margin-bottom: 1rem;">⚠️ ไม่มีข้อมูล</h3>
-            <p style="color: rgba(255,255,255,0.8);">ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="search-container">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #2a4d69; margin-bottom: 1rem;">📋 รายการลูกค้าทั้งหมด</h3>', unsafe_allow_html=True)
-        keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า", placeholder="กรอกชื่อลูกค้าที่ต้องการค้นหา...")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if keyword:
-            result_df = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)]
-        else:
-            result_df = df_filtered
-
-        if result_df.empty:
-            st.markdown("""
-            <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.1); border-radius: 15px; margin: 1rem 0;">
-                <h4 style="color: white;">🔍 ไม่พบข้อมูล</h4>
-                <p style="color: rgba(255,255,255,0.8);">ไม่พบข้อมูลลูกค้าที่ค้นหา</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            result_df = result_df.reset_index(drop=True)
-            display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']]
+            .nav {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
             
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.dataframe(display_df, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            .filters {
+                flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-            csv = display_df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button(
-                "📥 ดาวน์โหลดข้อมูล", 
-                csv, 
-                f"rubber_data_{st.session_state.selected_date.strftime('%Y%m%d')}.csv", 
-                "text/csv", 
-                use_container_width=True
-            )
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-# ========================================================================================
-# FOOTER
-# ========================================================================================
-st.markdown(f"""
-<div class="footer">
-    <p>🌳 ลิตาการยาง Dashboard © 2025 | อัปเดตล่าสุด: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}</p>
-    <p>พัฒนาด้วย ❤️ สำหรับการจัดการข้อมูลยางพาราแบบเรียลไทม์</p>
-</div>
-""", unsafe_allow_html=True)
+        .card {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-leaf"></i>
+                ลิตาการยาง
+            </h1>
+            <p>แดชบอร์ดข้อมูลยางพาราแบบเรียลไทม์</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <button class="nav-item active" onclick="showTab('overview')">
+                <i class="fas fa-chart-pie"></i> ภาพรวม
+            </button>
+            <button class="nav-item" onclick="showTab('summary')">
+                <i class="fas fa-clipboard-list"></i> สรุป
+            </button>
+            <button class="nav-item" onclick="showTab('list')">
+                <i class="fas fa-list"></i> รายการ
+            </button>
+            <button class="nav-item" onclick="showTab('employees')">
+                <i class="fas fa-users"></i> พนักงาน
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">วันที่</label>
+                <input type="date" class="filter-select" id="dateFilter">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">สาขา</label>
+                <select class="filter-select" id="branchFilter">
+                    <option value="">ทั้งหมด</option>
+                    <option value="สาขา1">สาขา 1</option>
+                    <option value="สาขา2">สาขา 2</option>
+                    <option value="สาขา3">สาขา 3</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">กอง</label>
+                <select class="filter-select" id="groupFilter">
+                    <option value="">ทั้งหมด</option>
+                    <option value="กอง1">กอง 1</option>
+                    <option value="กอง2">กอง 2</option>
+                    <option value="กอง3">กอง 3</option>
+                </select>
+            </div>
+            <button class="refresh-btn" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> รีเฟรช
+            </button>
+        </div>
+
+        <!-- Tab Contents -->
+        
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-weight"></i>
+                    </div>
+                    <div class="stat-value" id="totalWeight">2,450.5</div>
+                    <div class="stat-label">กิโลกรัม</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-value" id="totalRevenue">฿125,000</div>
+                    <div class="stat-label">รายได้รวม</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="totalCustomers">48</div>
+                    <div class="stat-label">ลูกค้าทั้งหมด</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-chart-bar"></i>
+                    จำนวนยางตามสาขา
+                </div>
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-bar" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-chart-pie"></i>
+                    สัดส่วนรายได้
+                </div>
+                <div class="chart-placeholder">
+                    <i class="fas fa-chart-pie" style="font-size: 3rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Tab -->
+        <div id="summary" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-boxes"></i>
+                    สรุปข้อมูลตามกอง
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>กอง</th>
+                                <th>จำนวนยาง (กก.)</th>
+                                <th>รายได้ (บาท)</th>
+                                <th>จำนวนลูกค้า</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>กอง 1</td>
+                                <td>850.2</td>
+                                <td>42,500</td>
+                                <td>16</td>
+                            </tr>
+                            <tr>
+                                <td>กอง 2</td>
+                                <td>920.8</td>
+                                <td>46,000</td>
+                                <td>18</td>
+                            </tr>
+                            <tr>
+                                <td>กอง 3</td>
+                                <td>679.5</td>
+                                <td>36,500</td>
+                                <td>14</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-building"></i>
+                    สรุปข้อมูลตามสาขา
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>สาขา</th>
+                                <th>จำนวนยาง (กก.)</th>
+                                <th>รายได้ (บาท)</th>
+                                <th>จำนวนลูกค้า</th>
+                                <th>ราคาเฉลี่ย</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>สาขา 1</td>
+                                <td>1,200.5</td>
+                                <td>60,000</td>
+                                <td>22</td>
+                                <td>50.0</td>
+                            </tr>
+                            <tr>
+                                <td>สาขา 2</td>
+                                <td>800.0</td>
+                                <td>40,000</td>
+                                <td>16</td>
+                                <td>50.0</td>
+                            </tr>
+                            <tr>
+                                <td>สาขา 3</td>
+                                <td>450.0</td>
+                                <td>25,000</td>
+                                <td>10</td>
+                                <td>55.6</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Tab -->
+        <div id="list" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-list"></i>
+                    รายการลูกค้าทั้งหมด
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="🔍 ค้นหาชื่อลูกค้า..." id="customerSearch">
+                </div>
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>สาขา</th>
+                                <th>กอง</th>
+                                <th>ชื่อลูกค้า</th>
+                                <th>จำนวนยาง (กก.)</th>
+                                <th>ราคา (บาท/กก.)</th>
+                                <th>จำนวนเงิน (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody">
+                            <tr>
+                                <td>สาขา 1</td>
+                                <td>กอง 1</td>
+                                <td>นายสมชาย ใจดี</td>
+                                <td>150.5</td>
+                                <td>50.0</td>
+                                <td>7,525</td>
+                            </tr>
+                            <tr>
+                                <td>สาขา 1</td>
+                                <td>กอง 2</td>
+                                <td>นางสาววิไล สุขใส</td>
+                                <td>200.0</td>
+                                <td>52.0</td>
+                                <td>10,400</td>
+                            </tr>
+                            <tr>
+                                <td>สาขา 2</td>
+                                <td>กอง 1</td>
+                                <td>นายประยุทธ์ ขยันงาน</td>
+                                <td>180.2</td>
+                                <td>48.0</td>
+                                <td>8,650</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Tab -->
+        <div id="employees" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-users"></i>
+                    สถานะพนักงาน
+                </div>
+                
+                <div class="employee-grid">
+                    <div class="employee-card">
+                        <div class="employee-name">นายสมศักดิ์ ทำงาน</div>
+                        <div class="employee-status">🟢 มาทำงาน 08:00</div>
+                    </div>
+                    <div class="employee-card">
+                        <div class="employee-name">นางสาวมณี ขยัน</div>
+                        <div class="employee-status">🟢 มาทำงาน 07:45</div>
+                    </div>
+                    <div class="employee-card late">
+                        <div class="employee-name">นายสุชาติ ช้าหน่อย</div>
+                        <div class="employee-status">🟡 มาสาย 08:30</div>
+                    </div>
+                    <div class="employee-card absent">
+                        <div class="employee-name">นายพิชิต ป่วย</div>
+                        <div class="employee-status">🔴 ขาดงาน</div>
+                    </div>
+                    <div class="employee-card leave">
+                        <div class="employee-name">นางวิภา ลางาน</div>
+                        <div class="employee-status">🟣 ลางาน</div>
+                    </div>
+                    <div class="employee-card">
+                        <div class="employee-name">นายอานนท์ ตรงเวลา</div>
+                        <div class="employee-status">🟢 มาทำงาน 07:50</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+        }
+
+        // Search functionality
+        document.getElementById('customerSearch').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('#customerTableBody tr');
+            
+            tableRows.forEach(row => {
+                const customerName = row.children[2].textContent.toLowerCase();
+                if (customerName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Refresh data
+        function refreshData() {
+            // Simulate data refresh
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const icon = refreshBtn.querySelector('i');
+            
+            icon.style.animation = 'spin 1s linear infinite';
+            
+            setTimeout(() => {
+                icon.style.animation = '';
+                // Update stats with random values
+                document.getElementById('totalWeight').textContent = (Math.random() * 3000 + 2000).toFixed(1);
+                document.getElementById('totalRevenue').textContent = '฿' + (Math.random() * 50000 + 100000).toFixed(0);
+                document.getElementById('totalCustomers').textContent = Math.floor(Math.random() * 20 + 40);
+            }, 1000);
+        }
+
+        // Set today's date
+        document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+
+        // Add spin animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
