@@ -43,6 +43,8 @@ st.markdown("""
     margin: auto;
   }
 
+
+
   /* Mobile-First Header */
   .header-container {
     background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 50%, #E5F3FF 100%);
@@ -77,19 +79,19 @@ st.markdown("""
     width: 280px !important;
   }
   
-  section[data-testid="stSidebar"] > div {
-    width: 280px !important;
-    padding: 0.5rem;
-  }
-  
-  .sidebar-section {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 0.8rem;
-    margin-bottom: 0.6rem;
+section[data-testid="stSidebar"] {
+    background: #F5F5F5 !important; /* Light gray instead of gradient */
+    border-right: 1px solid #E0E0E0;
+}
+
+.sidebar-section {
+    background: #FFFFFF !important; /* Pure white background */
+    padding: 1rem;
+    margin-bottom: 0.8rem;
     border-radius: 10px;
-    border: 1px solid #FFE0EC;
-    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
-  }
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
   
   .sidebar-title {
     font-size: 1rem;
@@ -111,18 +113,12 @@ st.markdown("""
     -webkit-overflow-scrolling: touch;
   }
   
-  .stTabs [data-baseweb="tab"] {
-    background: linear-gradient(135deg, #FFF5F5 0%, #F5F3FF 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 6px;
-    padding: 0.4rem 0.8rem;
-    color: #2C3E50;
-    font-weight: 600;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    min-width: fit-content;
-  }
+/* Fix tab text that might be cut off */
+.stTabs [data-baseweb="tab"] {
+    padding: 0.5rem 1rem !important;
+    min-width: auto !important;
+    font-size: 0.85rem !important;
+}
   
   .stTabs [aria-selected="true"] {
     background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
@@ -169,97 +165,124 @@ st.markdown("""
     word-wrap: break-word;
   }
 
-  /* Mobile Chart Container */
-  .chart-container-mobile {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF9FC 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 10px;
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
-  }
+/* Fix chart containers */
+.chart-container-mobile, .chart-container-compact {
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0;
+}
 
-  /* Employee Cards Mobile */
-  .employee-card {
-    background: linear-gradient(135deg, #FFEAA7 0%, #FFF3E0 100%);
-    padding: 0.5rem;
+/* Employee status cards - High contrast */
+.employee-card {
+    background: #FFFFFF !important;
+    padding: 0.6rem;
     border-radius: 6px;
     margin-bottom: 0.3rem;
-    border-left: 3px solid #FFD93D;
-    transition: all 0.3s ease;
-    font-size: 0.8rem;
-    color: #2C3E50;
-    word-wrap: break-word;
-  }
-  
-  .employee-card b {
-    color: #1A252F;
-    font-weight: 600;
+    border-left: 3px solid #333;
+    color: #000000 !important; /* Black text */
     font-size: 0.85rem;
-  }
-  
-  .employee-card small {
-    color: #34495E;
-    font-size: 0.7rem;
+}
+
+.employee-card b {
+    color: #000000 !important;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.employee-card small {
+    color: #333333 !important;
+    font-size: 0.75rem;
     display: block;
     margin-top: 0.1rem;
-  }
+}
+
+/* Fix specific employee card backgrounds */
+.employee-done {
+    background: #E8F5E9 !important;
+    border-left-color: #4CAF50;
+}
+
+.employee-late {
+    background: #FFF3E0 !important;
+    border-left-color: #FF9800;
+}
+
+.employee-leave {
+    background: #F3E5F5 !important;
+    border-left-color: #9C27B0;
+}
+
+.employee-offline {
+    background: #FFEBEE !important;
+    border-left-color: #F44336;
+}
+
 
   /* Mobile Data Table */
-  .dataframe {
-    font-size: 0.75rem !important;
-    border-radius: 8px;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .dataframe thead {
-    background: linear-gradient(90deg, #FFB6C1, #DDA0DD);
-    color: white;
+/* Fix table text overflow */
+.dataframe {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+.dataframe th, .dataframe td {
+    color: #000000 !important;
+    background-color: #FFFFFF !important;
+    padding: 0.5rem !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.dataframe thead th {
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
     font-weight: 600;
     position: sticky;
     top: 0;
     z-index: 10;
-  }
-  
-  .dataframe td, .dataframe th {
-    padding: 0.3rem !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100px;
-  }
+}
+
+.dataframe tbody tr:nth-child(even) {
+    background-color: #F5F5F5 !important;
+}
+
+.dataframe tbody tr:hover {
+    background-color: #E0E0E0 !important;
+}
 
   /* Mobile Search Container */
-  .search-container {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 10px;
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-    box-shadow: 0 2px 6px rgba(255, 182, 193, 0.1);
-  }
-  
-  .search-container h3 {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    margin-bottom: 0.6rem !important;
-  }
+/* Fix search container */
+.search-container {
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0;
+}
 
-  /* Mobile Input Fields */
-  .stTextInput > div > div > input,
-  .stSelectbox > div > div > select,
-  .stMultiSelect > div > div > div,
-  .stDateInput > div > div > input {
-    border: 1px solid #FFE0EC !important;
-    border-radius: 6px !important;
-    background: #FFF9FC !important;
-    padding: 0.4rem !important;
-    color: #2C3E50 !important;
+.search-container h3 {
+    color: #000000 !important;
+}
+
+/* Fix input fields text visibility */
+.stTextInput > div > div > input,
+.stSelectbox > div > div > select,
+.stMultiSelect > div > div > div,
+.stDateInput > div > div > input {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border: 1px solid #CCCCCC !important;
     font-weight: 500 !important;
-    font-size: 0.85rem !important;
-  }
+}
+
+/* Fix all labels */
+.stTextInput label, 
+.stSelectbox label, 
+.stMultiSelect label, 
+.stDateInput label,
+label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
 
   /* Mobile Buttons */
   .stButton > button {
@@ -307,58 +330,62 @@ st.markdown("""
     word-wrap: break-word;
   }
 
-  /* Empty State Mobile */
-  .empty-state {
-    text-align: center;
-    padding: 1.5rem;
-    background: rgba(255,255,255,0.9);
-    border-radius: 12px;
-    margin: 0.8rem 0;
-    border: 1px solid #FFE0EC;
-  }
+/* Fix empty state messages */
+.empty-state {
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0;
+}
   
-  .empty-state h3 {
-    color: #2C3E50;
-    margin-bottom: 0.4rem;
-    font-size: 1.1rem;
-  }
-  
-  .empty-state p {
-    color: #34495E;
-    font-size: 0.85rem;
-  }
+.empty-state h3, .empty-state p {
+    color: #000000 !important;
+}
 
   /* Hide Plotly Toolbar on Mobile */
   .modebar {
     display: none !important;
   }
 
-  /* Responsive Design for Larger Screens */
-  @media (min-width: 768px) {
-    .block-container {
-      padding: 1rem;
-    }
-    
+/* Responsive text sizing */
+@media (max-width: 768px) {
     .header-title {
-      font-size: 1.6rem;
+        font-size: 1.2rem !important;
+        padding: 0 0.5rem;
     }
     
     .header-subtitle {
-      font-size: 0.9rem;
+        font-size: 0.75rem !important;
+        padding: 0 0.5rem;
     }
     
-    .metric-card-mobile {
-      min-height: 85px;
-      padding: 0.8rem;
+    .dataframe th, .dataframe td {
+        font-size: 0.75rem !important;
+        padding: 0.3rem !important;
+        max-width: 100px;
     }
     
-    .metric-value-mobile {
-      font-size: 1.3rem;
+    /* Prevent horizontal scroll */
+    * {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
     }
+}
     
-    .metric-label-mobile {
-      font-size: 0.75rem;
-    }
+* Fix metric cards text */
+.metric-card-mobile, .metric-card-compact {
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0;
+    color: #000000 !important;
+}
+
+.metric-value-mobile, .metric-value-small {
+    color: #000000 !important;
+    font-weight: 700;
+}
+
+.metric-label-mobile, .metric-label-small {
+    color: #333333 !important;
+    font-weight: 600;
+}
     
     .dataframe {
       font-size: 0.85rem !important;
@@ -388,15 +415,22 @@ st.markdown("""
       min-height: 90px;
     }
     
-    .dataframe {
-      font-size: 0.9rem !important;
-    }
-    
-    .dataframe td, .dataframe th {
-      max-width: none;
-      padding: 0.5rem !important;
+    .dataframe th, .dataframe td {
+        font-size: 0.75rem !important;
+        padding: 0.3rem !important;
+        max-width: 100px;
     }
   }
+
+  @media (prefers-contrast: high) {
+    * {
+        color: #000000 !important;
+    }
+    
+    .stApp {
+        background: #FFFFFF !important;
+    }
+}
 
   /* Prevent horizontal scroll */
   html, body {
