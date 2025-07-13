@@ -120,20 +120,17 @@ st.markdown("""
   }
 
   /* Compact Metric Cards */
-.metric-card-compact {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-  border: 1px solid #FFE0EC;
-  border-radius: 12px;
-  padding: 0.8rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  height: auto;
-  max-width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
+  .metric-card-compact {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
+    border: 1px solid #FFE0EC;
+    border-radius: 12px;
+    padding: 0.8rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    height: 90px;
+  }
 
   .metric-card-compact:hover {
     transform: translateY(-2px);
@@ -145,19 +142,19 @@ st.markdown("""
     margin-bottom: 0.2rem;
   }
 
-.metric-value-small {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #E91E63;
-  line-height: 1.2;
-}
+  .metric-value-small {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #E91E63;
+    line-height: 1.2;
+  }
 
-.metric-label-small {
-  font-size: 0.7rem;
-  color: #2C3E50;
-  font-weight: 500;
-  margin-top: 0.2rem;
-}
+  .metric-label-small {
+    font-size: 0.75rem;
+    color: #2C3E50;
+    font-weight: 500;
+    margin-top: 0.2rem;
+  }
 
   /* Compact Chart Container */
   .chart-container-compact {
@@ -681,27 +678,25 @@ with tab1:
                     text='จำนวนยาง',
                     color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
                 )
-fig_bar.update_traces(
-    texttemplate='%{text:.0f}',
-    textposition='inside',  # เดิมเป็น 'outside'
-    textfont=dict(color='white', size=12)  # ทำให้ตัวเลขมองเห็นในแท่งสีชมพู
-)
-
-fig_bar.update_layout(
-    height=320,
-    margin=dict(l=20, r=20, t=40, b=40),  # เพิ่มขอบกันล้น
-    title="จำนวนยางตามสาขา (กก.)",
-    title_font_size=14,
-    title_font_color='#2C3E50',
-    font_family="Prompt",
-    plot_bgcolor='rgba(255,255,255,0)',
-    paper_bgcolor='rgba(255,255,255,0)',
-    font_color='#2C3E50',
-    showlegend=False,
-    xaxis_title="",
-    yaxis_title=""
-)
-
+                fig_bar.update_traces(
+                    texttemplate='%{text:.0f}',
+                    textposition='outside',
+                    textfont_size=11
+                )
+                fig_bar.update_layout(
+                    height=300,
+                    margin=dict(l=0, r=0, t=30, b=0),
+                    title="จำนวนยางตามสาขา (กก.)",
+                    title_font_size=14,
+                    title_font_color='#2C3E50',
+                    font_family="Prompt",
+                    plot_bgcolor='rgba(255,255,255,0)',
+                    paper_bgcolor='rgba(255,255,255,0)',
+                    font_color='#2C3E50',
+                    showlegend=False,
+                    xaxis_title="",
+                    yaxis_title=""
+                )
                 fig_bar.update_xaxes(showgrid=False)
                 fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
