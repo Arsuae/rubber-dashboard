@@ -700,8 +700,8 @@ with tab1:
                     xaxis_title="",
                     yaxis_title=""
                 )
-                fig_bar.update_xaxes(showgrid=False)
-                fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
+                fig_bar.update_xaxes(tickfont=dict(color='#2C3E50', size=11))
+fig_bar.update_yaxes(tickfont=dict(color='#2C3E50', size=11), gridcolor='rgba(255,224,236,0.5)')
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
         
