@@ -263,19 +263,26 @@ st.markdown("""
     margin-bottom: 0.8rem !important;
   }
 
-  /* Input Fields */
-  .stTextInput > div > div > input,
-  .stSelectbox > div > div > select,
-  .stMultiSelect > div > div > div,
-  .stDateInput > div > div > input {
-    border: 1px solid #FFE0EC !important;
-    border-radius: 8px !important;
-    background: #FFF9FC !important;
-    padding: 0.5rem !important;
-    color: #2C3E50 !important;
-    font-weight: 500 !important;
-    font-size: 0.9rem !important;
-  }
+/* Input Fields */
+.stTextInput > div > div > input,
+.stSelectbox > div > div > select,
+.stMultiSelect > div > div > div,
+.stDateInput > div > div > input {
+  border: 1px solid #FFE0EC !important;
+  border-radius: 8px !important;
+  background: #FFF9FC !important;
+  padding: 0.5rem !important;
+  color: #2C3E50 !important;  /* <-- ตัวอักษรเข้มชัดเจน */
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+}
+
+/* Select Dropdown Options */
+.css-1wa3eu0-placeholder {
+  color: #2C3E50 !important;
+  opacity: 1 !important;
+  font-weight: 600;
+}
   
   .stTextInput > div > div > input:focus,
   .stSelectbox > div > div > select:focus,
