@@ -2,903 +2,1180 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, date, time
-import io
+from datetime import datetime, date, timedelta
 import requests
 import json
+from typing import Dict, List, Optional, Tuple
 
 # ========================================================================================
-# CONFIG
+# APP CONFIGURATION
 # ========================================================================================
 st.set_page_config(
-    page_title="ลิตาการยาง Dashboard",
+    page_title="🌳 ลิตาการยาง Dashboard",
     page_icon="🌳",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ========================================================================================
-# CUSTOM CSS - Professional & Elegant Design
+# ENHANCED CSS STYLING
 # ========================================================================================
 st.markdown("""
 <style>
-  /* Import Google Fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap');
 
-  /* Global Styles */
-  .stApp {
-    font-family: 'Prompt', 'Kanit', sans-serif;
-    background: linear-gradient(to bottom, #FFF9F3 0%, #F5F3FF 100%);
-    min-height: 100vh;
-    color: #2C3E50;
-  }
-  
-  .block-container {
-    padding: 1.5rem;
-    max-width: 1400px;
-    margin: auto;
-  }
-
-  /* Sidebar Styling */
-  section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #FFE5EC 0%, #E8E5FF 100%);
-    border-right: 2px solid #FFD6E0;
-  }
-  
-  .sidebar-section {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 1rem;
-    margin-bottom: 0.8rem;
-    border-radius: 12px;
-    border: 1px solid #FFE0EC;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  }
-  
-  .sidebar-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #2C3E50;
-    margin-bottom: 0.6rem;
-    text-align: center;
-  }
-
-  /* Compact Header */
-  .header-container {
-    background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 50%, #E5F3FF 100%);
-    padding: 1rem 1.5rem;
-    border-radius: 16px;
-    border: 1px solid #FFD6E0;
-    margin-bottom: 1rem;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.15);
-  }
-  
-  .header-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #2C3E50;
-    margin: 0;
-  }
-  
-  .header-subtitle {
-    font-size: 0.9rem;
-    color: #34495E;
-    margin-top: 0.3rem;
-    font-weight: 500;
-  }
-
-  /* Tabs Styling */
-  .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 0.4rem;
-    margin-bottom: 1rem;
-    border: 1px solid #FFE0EC;
-  }
-  
-  .stTabs [data-baseweb="tab"] {
-    background: linear-gradient(135deg, #FFF5F5 0%, #F5F3FF 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    color: #2C3E50;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-  }
-  
-  .stTabs [data-baseweb="tab"]:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.2);
-  }
-  
-  .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
-    border-color: #FF69B4;
-    color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
-  }
-
-  /* Compact Metric Cards */
-  .metric-card-compact {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 0.8rem;
-    text-align: center;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-    height: 90px;
-  }
-
-  .metric-card-compact:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
-  }
-
-  .metric-icon-small {
-    font-size: 1.5rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .metric-value-small {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #E91E63;
-    line-height: 1.2;
-  }
-
-  .metric-label-small {
-    font-size: 0.75rem;
-    color: #2C3E50;
-    font-weight: 500;
-    margin-top: 0.2rem;
-  }
-
-  /* Compact Chart Container */
-  .chart-container-compact {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF9FC 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  }
-
-  /* Employee Cards */
-  .employee-card {
-    background: linear-gradient(135deg, #FFEAA7 0%, #FFF3E0 100%);
-    padding: 0.6rem;
-    border-radius: 8px;
-    margin-bottom: 0.4rem;
-    border-left: 3px solid #FFD93D;
-    transition: all 0.3s ease;
-    font-size: 0.85rem;
-    color: #2C3E50;
-  }
-  
-  .employee-card b {
-    color: #1A252F;
-    font-weight: 600;
-  }
-  
-  .employee-card small {
-    color: #34495E;
-    font-size: 0.75rem;
-  }
-  
-  .employee-card:hover {
-    transform: translateX(3px);
-    box-shadow: 0 2px 8px rgba(255, 217, 61, 0.2);
-  }
-  
-  .employee-offline {
-    background: linear-gradient(135deg, #FFB6C1 0%, #FFE0EC 100%);
-    border-left-color: #FF69B4;
-  }
-  
-  .employee-done {
-    background: linear-gradient(135deg, #B2DFDB 0%, #E0F2F1 100%);
-    border-left-color: #4DB6AC;
-  }
-  
-  .employee-late {
-    background: linear-gradient(135deg, #FFE0B2 0%, #FFF3E0 100%);
-    border-left-color: #FFB74D;
-  }
-  
-  .employee-leave {
-    background: linear-gradient(135deg, #E1BEE7 0%, #F3E5F5 100%);
-    border-left-color: #BA68C8;
-  }
-
-  /* Data Table Styling */
-  .dataframe {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #FFE0EC !important;
-    background: white;
-    color: #2C3E50;
-    font-size: 0.9rem;
-  }
-  
-  .dataframe thead {
-    background: linear-gradient(90deg, #FFB6C1, #DDA0DD);
-    color: white;
-    font-weight: 600;
-  }
-  
-  .dataframe tbody tr:nth-child(even) {
-    background: #FFF5F8;
-  }
-  
-  .dataframe tbody tr:hover {
-    background: #FFE0EC;
-  }
-  
-  .dataframe td, .dataframe th {
-    color: #2C3E50 !important;
-    font-weight: 500;
-    padding: 0.5rem !important;
-  }
-
-  /* Search Container */
-  .search-container {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  }
-  
-  .search-container h3 {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-    font-size: 1.1rem !important;
-    margin-bottom: 0.8rem !important;
-  }
-
-  /* Input Fields */
-  .stTextInput > div > div > input,
-  .stSelectbox > div > div > select,
-  .stMultiSelect > div > div > div,
-  .stDateInput > div > div > input {
-    border: 1px solid #FFE0EC !important;
-    border-radius: 8px !important;
-    background: #FFF9FC !important;
-    padding: 0.5rem !important;
-    color: #2C3E50 !important;
-    font-weight: 500 !important;
-    font-size: 0.9rem !important;
-  }
-  
-  .stTextInput > div > div > input:focus,
-  .stSelectbox > div > div > select:focus,
-  .stDateInput > div > div > input:focus {
-    border-color: #FF69B4 !important;
-    box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.2) !important;
-  }
-  
-  /* Labels */
-  .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDateInput label {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-  }
-
-  /* Buttons */
-  .stButton > button {
-    background: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem 1.2rem;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(255, 105, 180, 0.3);
-  }
-  
-  .stButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
-  }
-  
-  .stDownloadButton > button {
-    background: linear-gradient(135deg, #98FB98 0%, #90EE90 100%);
-    color: #1B5E20;
-    border: 1px solid #90EE90;
-    border-radius: 8px;
-    padding: 0.5rem 1.2rem;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-  }
-  
-  .stDownloadButton > button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(144, 238, 144, 0.4);
-  }
-
-  /* Footer */
-  .footer {
-    background: linear-gradient(135deg, #FFE5E5 0%, #E8E5FF 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    color: #2C3E50;
-    font-size: 0.85rem;
-    margin-top: 1.5rem;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  }
-  
-  .footer p {
-    color: #2C3E50 !important;
-    font-weight: 500;
-    margin: 0.3rem 0;
-  }
-
-  /* Alerts & Messages */
-  .stAlert {
-    border-radius: 8px;
-    border: 1px solid #FFE0EC;
-    background: linear-gradient(135deg, #FFF5F5 0%, #FFE0EC 100%);
-    color: #2C3E50 !important;
-    font-size: 0.9rem;
-  }
-  
-  .stAlert > div {
-    color: #2C3E50 !important;
-    font-weight: 500;
-  }
-
-  /* Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 2rem;
-    background: rgba(255,255,255,0.9);
-    border-radius: 16px;
-    margin: 1rem 0;
-    border: 1px solid #FFE0EC;
-  }
-  
-  .empty-state h3 {
-    color: #2C3E50;
-    margin-bottom: 0.5rem;
-  }
-  
-  .empty-state p {
-    color: #34495E;
-  }
-
-  /* All text elements */
-  p, span, div, label {
-    color: #2C3E50;
-  }
-  
-  /* Headings */
-  h1, h2, h3, h4, h5, h6 {
-    color: #2C3E50 !important;
-    font-weight: 600 !important;
-  }
-
-  /* Hide Plotly Toolbar */
-  .modebar {
-    display: none !important;
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: #FFF5F8;
-    border-radius: 8px;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #FFB6C1, #DDA0DD);
-    border-radius: 8px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #FF69B4, #BA68C8);
-  }
-
-  /* Loading Spinner */
-  .stSpinner > div {
-    border-color: #FFB6C1 !important;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .header-title {
-      font-size: 1.5rem;
+    /* Global Theme */
+    .stApp {
+        font-family: 'Prompt', 'Kanit', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #2c3e50;
     }
     
-    .metric-card-compact {
-      height: 80px;
-      padding: 0.6rem;
+    /* Main Container */
+    .main-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    /* Header Styling */
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     }
     
-    .metric-value-small {
-      font-size: 1.1rem;
+    .dashboard-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     
-    .metric-label-small {
-      font-size: 0.7rem;
+    .dashboard-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
     }
-  }
+
+    /* Sidebar Enhancement */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .sidebar-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sidebar-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        text-align: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+    }
+
+    /* Modern Metric Cards */
+    .metric-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    }
+    
+    .metric-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.3rem;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    /* Employee Status Cards */
+    .employee-status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .status-summary-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 0.8rem;
+        text-align: center;
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .status-present { border-left-color: #10b981; background: linear-gradient(135deg, #ecfdf5, #f0fdf4); }
+    .status-late { border-left-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fefce8); }
+    .status-leave { border-left-color: #8b5cf6; background: linear-gradient(135deg, #f5f3ff, #faf5ff); }
+    .status-absent { border-left-color: #ef4444; background: linear-gradient(135deg, #fef2f2, #fefefe); }
+    
+    .status-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+    
+    .status-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        opacity: 0.8;
+    }
+
+    .employee-item {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 0.8rem;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .employee-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .employee-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #2c3e50;
+    }
+    
+    .employee-status {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-top: 0.2rem;
+    }
+
+    /* Enhanced Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        border-radius: 8px;
+        color: #64748b;
+        font-weight: 600;
+        padding: 0.8rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Data Table Styling */
+    .dataframe {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none !important;
+    }
+    
+    .dataframe thead th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white !important;
+        font-weight: 600;
+        padding: 1rem !important;
+        border: none !important;
+    }
+    
+    .dataframe tbody td {
+        padding: 0.8rem !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        color: #2c3e50 !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background-color: #f8fafc !important;
+    }
+
+    /* Form Elements */
+    .stSelectbox label, .stTextInput label, .stDateInput label, .stMultiSelect label {
+        color: #2c3e50 !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .stSelectbox > div > div > select,
+    .stTextInput > div > div > input,
+    .stDateInput > div > div > input {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 0.6rem !important;
+        transition: all 0.3s ease !important;
+        background: white !important;
+    }
+    
+    .stSelectbox > div > div > select:focus,
+    .stTextInput > div > div > input:focus,
+    .stDateInput > div > div > input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .stDownloadButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Alert Messages */
+    .stAlert {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        margin: 2rem 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        backdrop-filter: blur(10px);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .empty-state p {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    /* Loading Animation */
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-title { font-size: 2rem; }
+        .metric-card { height: 120px; padding: 1rem; }
+        .metric-value { font-size: 1.5rem; }
+        .chart-container { padding: 1rem; }
+    }
+
+    /* Hide Streamlit Elements */
+    .viewerBadge_container__1QSob { display: none; }
+    .stDeployButton { display: none; }
+    footer { display: none; }
+    .stDecoration { display: none; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #667eea, #764ba2);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #5a67d8, #6b46c1);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ========================================================================================
-# LOAD DATA FUNCTIONS
+# DATA LOADING FUNCTIONS
 # ========================================================================================
-@st.cache_data(ttl=300)
-def load_data():
-    """Load rubber data from Google Sheets with error handling"""
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_rubber_data() -> pd.DataFrame:
+    """Load rubber data from Google Sheets with enhanced error handling"""
     try:
-        url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
-        df = pd.read_csv(url, header=None)
-        df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
-        
-        # Data cleaning and type conversion
-        df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
-        df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-        
-        return df
+        with st.spinner("🔄 กำลังโหลดข้อมูลยางพารา..."):
+            url = "https://docs.google.com/spreadsheets/d/1S1x1No7A_kS7tVDKd52Y5DIQkoKtE14GBlQDcUvSICU/export?format=csv&gid=2026341208"
+            df = pd.read_csv(url, header=None)
+            
+            # Set column names
+            df.columns = ['ลำดับ', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่', 'กอง', 'สาขา']
+            
+            # Data cleaning and type conversion
+            df['วันที่'] = pd.to_datetime(df['วันที่'], format="%d/%m/%Y", errors='coerce')
+            df['จำนวนยาง'] = pd.to_numeric(df['จำนวนยาง'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+            df['ราคา'] = pd.to_numeric(df['ราคา'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+            df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+            
+            # Remove rows with invalid data
+            df = df.dropna(subset=['วันที่'])
+            df = df[df['จำนวนยาง'] > 0]
+            
+            return df
+            
     except Exception as e:
-        st.error(f"❌ ไม่สามารถโหลดข้อมูลได้: {str(e)}")
+        st.error(f"❌ ไม่สามารถโหลดข้อมูลยางพาราได้: {str(e)}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=60)
-def load_employee_status_from_apps_script():
-    """Load employee status from Google Apps Script API"""
+@st.cache_data(ttl=60, show_spinner=False)
+def load_employee_data() -> pd.DataFrame:
+    """Load employee status from Google Apps Script API with timeout handling"""
     try:
         apps_script_url = 'https://script.google.com/macros/s/AKfycbwcURACTMc6xWy-0vPfxiuG4orie0Pp0UafiNIA57uebo33YRvDiUleqihfZ_rw3B1PKw/exec'
-        response = requests.get(apps_script_url, timeout=(5, 30))
-
+        
+        response = requests.get(apps_script_url, timeout=10)
+        
         if response.status_code == 200:
             data = response.json()
-            if data.get('success'):
-                employees = data.get('data', [])
+            if data.get('success') and data.get('data'):
+                employees = data['data']
                 emp_df = pd.DataFrame(employees)
-                if not emp_df.empty:
-                    emp_df = emp_df[['name', 'status', 'time']].rename(columns={
-                        'name': 'ชื่อพนักงาน',
-                        'status': 'สถานะ',
-                        'time': 'เวลา'
-                    })
-                    return emp_df
-        
+                emp_df = emp_df[['name', 'status', 'time']].rename(columns={
+                    'name': 'ชื่อพนักงาน',
+                    'status': 'สถานะ',
+                    'time': 'เวลา'
+                })
+                return emp_df
+                
         return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ", "เวลา"])
         
+    except requests.exceptions.Timeout:
+        st.sidebar.warning("⏰ การเชื่อมต่อข้อมูลพนักงานใช้เวลานานกว่าปกติ")
+        return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ", "เวลา"])
     except Exception as e:
         return pd.DataFrame(columns=["ชื่อพนักงาน", "สถานะ", "เวลา"])
+
+# ========================================================================================
+# UTILITY FUNCTIONS
+# ========================================================================================
+
+def format_number(value: float, decimal_places: int = 0) -> str:
+    """Format number with Thai-style comma separation"""
+    if decimal_places == 0:
+        return f"{value:,.0f}"
+    else:
+        return f"{value:,.{decimal_places}f}"
+
+def create_metric_card(icon: str, value: str, label: str, color: str = "#667eea") -> str:
+    """Generate HTML for metric card"""
+    return f"""
+    <div class="metric-card">
+        <div class="metric-icon">{icon}</div>
+        <div class="metric-value" style="color: {color};">{value}</div>
+        <div class="metric-label">{label}</div>
+    </div>
+    """
+
+def filter_dataframe(df: pd.DataFrame, selected_date: date, branches: List[str], groups: List[str]) -> pd.DataFrame:
+    """Filter dataframe based on selected criteria"""
+    if df.empty:
+        return df
+        
+    filtered_df = df[
+        (df['วันที่'].dt.date == selected_date) &
+        (df['สาขา'].isin(branches)) &
+        (df['กอง'].isin(groups))
+    ]
+    
+    return filtered_df
 
 # ========================================================================================
 # SESSION STATE INITIALIZATION
 # ========================================================================================
-if 'tab' not in st.session_state:
-    st.session_state.tab = "📁 รายการ"
-if 'selected_date' not in st.session_state:
-    st.session_state.selected_date = date.today()
-if 'selected_branches' not in st.session_state:
-    st.session_state.selected_branches = []
-if 'selected_groups' not in st.session_state:
-    st.session_state.selected_groups = []
 
-# ========================================================================================
-# SIDEBAR
-# ========================================================================================
-with st.sidebar:
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<h3 class="sidebar-title">🎛️ ตัวกรองข้อมูล</h3>', unsafe_allow_html=True)
-    
-    selected_date = st.date_input("📅 เลือกวันที่", value=st.session_state.selected_date)
-    st.session_state.selected_date = selected_date
-
-    df = load_data()
-    
-    if not df.empty:
-        branches = df['สาขา'].dropna().unique().tolist()
-        selected_branches = st.multiselect("🏢 เลือกสาขา", options=branches, default=st.session_state.selected_branches or branches)
-        st.session_state.selected_branches = selected_branches
-
-        groups = df['กอง'].dropna().unique().tolist()
-        if "กอง3" not in groups:
-            groups.append("กอง3")
-        selected_groups = st.multiselect("📦 เลือกกอง", options=groups, default=st.session_state.selected_groups or groups)
-        st.session_state.selected_groups = selected_groups
-    else:
-        st.error("ไม่มีข้อมูลให้แสดง")
+def initialize_session_state():
+    """Initialize session state variables"""
+    if 'selected_date' not in st.session_state:
+        st.session_state.selected_date = date.today()
+    if 'selected_branches' not in st.session_state:
         st.session_state.selected_branches = []
+    if 'selected_groups' not in st.session_state:
         st.session_state.selected_groups = []
 
-    if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+initialize_session_state()
 
-    # Employee Status Section
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.markdown('<h3 class="sidebar-title">👨‍🌾 สถานะพนักงาน</h3>', unsafe_allow_html=True)
-    
-    emp_df = load_employee_status_from_apps_script()
-    
-    if not emp_df.empty:
-        # Count status
-        status_counts = {
-            'มาทำงาน': 0,
-            'มาสาย': 0,
-            'ลา': 0,
-            'ขาด': 0
-        }
+# ========================================================================================
+# SIDEBAR COMPONENTS
+# ========================================================================================
+
+def render_sidebar():
+    """Render enhanced sidebar with filters and employee status"""
+    with st.sidebar:
+        # Filters Section
+        st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">🎛️ ตัวกรองข้อมูล</div>', unsafe_allow_html=True)
         
-        for _, row in emp_df.iterrows():
-            status = row['สถานะ']
-            if status in status_counts:
-                status_counts[status] += 1
+        # Date selector
+        selected_date = st.date_input(
+            "📅 เลือกวันที่",
+            value=st.session_state.selected_date,
+            max_value=date.today(),
+            help="เลือกวันที่ที่ต้องการดูข้อมูล"
+        )
+        st.session_state.selected_date = selected_date
+
+        # Load data for filter options
+        df = load_rubber_data()
         
-        # Display summary in 2x2 grid
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(76,175,80,0.1); border-radius: 8px; margin-bottom: 0.5rem;'><b style='color: #4CAF50; font-size: 1.2rem;'>{status_counts['มาทำงาน']}</b><br><small style='color: #2C3E50;'>มาทำงาน</small></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(242,153,74,0.1); border-radius: 8px;'><b style='color: #f2994a; font-size: 1.2rem;'>{status_counts['มาสาย']}</b><br><small style='color: #2C3E50;'>มาสาย</small></div>", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(102,126,234,0.1); border-radius: 8px; margin-bottom: 0.5rem;'><b style='color: #667eea; font-size: 1.2rem;'>{status_counts['ลา']}</b><br><small style='color: #2C3E50;'>ลางาน</small></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: rgba(244,67,54,0.1); border-radius: 8px;'><b style='color: #f44336; font-size: 1.2rem;'>{status_counts['ขาด']}</b><br><small style='color: #2C3E50;'>ขาดงาน</small></div>", unsafe_allow_html=True)
+        if not df.empty:
+            # Branch filter
+            branches = sorted(df['สาขา'].dropna().unique().tolist())
+            selected_branches = st.multiselect(
+                "🏢 เลือกสาขา",
+                options=branches,
+                default=st.session_state.selected_branches or branches,
+                help="เลือกสาขาที่ต้องการดูข้อมูล"
+            )
+            st.session_state.selected_branches = selected_branches
+
+            # Group filter
+            groups = sorted(df['กอง'].dropna().unique().tolist())
+            selected_groups = st.multiselect(
+                "📦 เลือกกอง",
+                options=groups,
+                default=st.session_state.selected_groups or groups,
+                help="เลือกกองที่ต้องการดูข้อมูล"
+            )
+            st.session_state.selected_groups = selected_groups
         
-        st.markdown("<hr style='margin: 0.8rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+        # Refresh button
+        if st.button("🔄 รีเฟรชข้อมูล", use_container_width=True, help="โหลดข้อมูลใหม่"):
+            st.cache_data.clear()
+            st.rerun()
         
-        # Display individual employees
-        for _, row in emp_df.iterrows():
-            name = row['ชื่อพนักงาน']
-            status = row['สถานะ']
-            time_str = row.get('เวลา', '')
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Employee Status Section
+        st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">👨‍🌾 สถานะพนักงาน</div>', unsafe_allow_html=True)
+        
+        emp_df = load_employee_data()
+        
+        if not emp_df.empty:
+            # Count status
+            status_counts = {
+                'มาทำงาน': len(emp_df[emp_df['สถานะ'] == 'มาทำงาน']),
+                'มาสาย': len(emp_df[emp_df['สถานะ'] == 'มาสาย']),
+                'ลา': len(emp_df[emp_df['สถานะ'] == 'ลา']),
+                'ขาด': len(emp_df[emp_df['สถานะ'] == 'ขาด'])
+            }
             
-            if status == 'มาทำงาน':
-                status_text = f"🟢 มาทำงาน {time_str}"
-                card_class = "employee-card employee-done"
-            elif status == 'มาสาย':
-                status_text = f"🟡 มาสาย {time_str}"
-                card_class = "employee-card employee-late"
-            elif status == 'ลา':
-                status_text = "🟣 ลางาน"
-                card_class = "employee-card employee-leave"
-            else:
-                status_text = "🔴 ขาดงาน"
-                card_class = "employee-card employee-offline"
+            # Status summary grid
+            st.markdown('<div class="employee-status-grid">', unsafe_allow_html=True)
             
-            st.markdown(f'<div class="{card_class}"><b>{name}</b><br><small>{status_text}</small></div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="employee-card employee-offline">ไม่สามารถดึงข้อมูลพนักงานได้</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ========================================================================================
-# FILTER DATA
-# ========================================================================================
-if not df.empty and st.session_state.selected_branches and st.session_state.selected_groups:
-    df_filtered = df[
-        (df['วันที่'].dt.date == st.session_state.selected_date) &
-        (df['สาขา'].isin(st.session_state.selected_branches)) &
-        (df['กอง'].isin(st.session_state.selected_groups))
-    ]
-else:
-    df_filtered = pd.DataFrame()
-
-# ========================================================================================
-# HEADER
-# ========================================================================================
-st.markdown("""
-<div class="header-container">
-    <h1 class="header-title">🌳 ลิตาการยาง Dashboard</h1>
-    <p class="header-subtitle">ระบบจัดการข้อมูลยางพาราแบบเรียลไทม์</p>
-</div>
-""", unsafe_allow_html=True)
-
-# ========================================================================================
-# MAIN TABS
-# ========================================================================================
-tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุปข้อมูล", "📁 รายการ"])
-
-# ========================================================================================
-# TAB 1: Overview Dashboard
-# ========================================================================================
-with tab1:
-    if df_filtered.empty:
-        st.markdown("""
-        <div class="empty-state">
-            <h3>⚠️ ไม่มีข้อมูล</h3>
-            <p>ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        # Compact Metrics Row
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
             st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">⚖️</div>
-                <div class="metric-value-small">{df_filtered['จำนวนยาง'].sum():,.0f}</div>
-                <div class="metric-label-small">กิโลกรัม</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">💰</div>
-                <div class="metric-value-small">฿{df_filtered['จำนวนเงิน'].sum():,.0f}</div>
-                <div class="metric-label-small">รายได้รวม</div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">👥</div>
-                <div class="metric-value-small">{df_filtered['ชื่อลูกค้า'].count():,.0f}</div>
-                <div class="metric-label-small">ลูกค้าทั้งหมด</div>
+            <div class="status-summary-card status-present">
+                <div class="status-number" style="color: #10b981;">{status_counts['มาทำงาน']}</div>
+                <div class="status-label">มาทำงาน</div>
             </div>
             """, unsafe_allow_html=True)
             
-        with col4:
-            avg_price = df_filtered['ราคา'].mean()
             st.markdown(f"""
-            <div class="metric-card-compact">
-                <div class="metric-icon-small">📊</div>
-                <div class="metric-value-small">฿{avg_price:,.1f}</div>
-                <div class="metric-label-small">ราคาเฉลี่ย</div>
+            <div class="status-summary-card status-late">
+                <div class="status-number" style="color: #f59e0b;">{status_counts['มาสาย']}</div>
+                <div class="status-label">มาสาย</div>
             </div>
             """, unsafe_allow_html=True)
-
-        # Charts in same row
-        col_chart1, col_chart2 = st.columns(2)
-        
-        with col_chart1:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-            if not bar_data.empty:
-                fig_bar = px.bar(
-                    bar_data, 
-                    x='สาขา', 
-                    y='จำนวนยาง',
-                    text='จำนวนยาง',
-                    color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
-                )
-                fig_bar.update_traces(
-                    texttemplate='%{text:.0f}',
-                    textposition='outside',
-                    textfont_size=11
-                )
-                fig_bar.update_layout(
-                    height=300,
-                    margin=dict(l=0, r=0, t=30, b=0),
-                    title="จำนวนยางตามสาขา (กก.)",
-                    title_font_size=14,
-                    title_font_color='#2C3E50',
-                    font_family="Prompt",
-                    plot_bgcolor='rgba(255,255,255,0)',
-                    paper_bgcolor='rgba(255,255,255,0)',
-                    font_color='#2C3E50',
-                    showlegend=False,
-                    xaxis_title="",
-                    yaxis_title=""
-                )
-                fig_bar.update_xaxes(showgrid=False)
-                fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
-                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+            
+            st.markdown(f"""
+            <div class="status-summary-card status-leave">
+                <div class="status-number" style="color: #8b5cf6;">{status_counts['ลา']}</div>
+                <div class="status-label">ลางาน</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="status-summary-card status-absent">
+                <div class="status-number" style="color: #ef4444;">{status_counts['ขาด']}</div>
+                <div class="status-label">ขาดงาน</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
             st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col_chart2:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
-            if not pie_data.empty:
-                fig_pie = px.pie(
-                    pie_data, 
-                    values='จำนวนเงิน', 
-                    names='สาขา', 
-                    hole=0.5,
-                    color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0', '#FCE4EC']
-                )
-                fig_pie.update_traces(
-                    textposition='inside',
-                    textinfo='percent+label',
-                    textfont_size=11
-                )
-                fig_pie.update_layout(
-                    height=300,
-                    margin=dict(l=0, r=0, t=30, b=0),
-                    title="สัดส่วนรายได้ตามสาขา",
-                    title_font_size=14,
-                    title_font_color='#2C3E50',
-                    font_family="Prompt",
-                    plot_bgcolor='rgba(255,255,255,0)',
-                    paper_bgcolor='rgba(255,255,255,0)',
-                    font_color='#2C3E50',
-                    showlegend=False
-                )
-                st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-            st.markdown('</div>', unsafe_allow_html=True)
-
-# ========================================================================================
-# TAB 2: Summary
-# ========================================================================================
-with tab2:
-    if df_filtered.empty:
-        st.markdown("""
-        <div class="empty-state">
-            <h3>⚠️ ไม่มีข้อมูล</h3>
-            <p>ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        col_summary1, col_summary2 = st.columns(2)
-        
-        with col_summary1:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">📦 สรุปข้อมูลตามกอง</h3>', unsafe_allow_html=True)
-            by_gong = df_filtered.groupby('กอง').agg({
-                'จำนวนยาง': 'sum', 
-                'จำนวนเงิน': 'sum', 
-                'ชื่อลูกค้า': 'count'
-            }).reset_index()
-            by_gong = by_gong.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า'})
-            by_gong['จำนวนยาง'] = by_gong['จำนวนยาง'].round(1)
-            by_gong['จำนวนเงิน'] = by_gong['จำนวนเงิน'].round(0)
-            st.dataframe(by_gong, use_container_width=True, height=200)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with col_summary2:
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">🏢 สรุปข้อมูลตามสาขา</h3>', unsafe_allow_html=True)
-            by_branch = df_filtered.groupby('สาขา').agg({
-                'จำนวนยาง': 'sum', 
-                'จำนวนเงิน': 'sum', 
-                'ชื่อลูกค้า': 'count', 
-                'ราคา': 'mean'
-            }).reset_index()
-            by_branch = by_branch.rename(columns={'ชื่อลูกค้า': 'จำนวนลูกค้า', 'ราคา': 'ราคาเฉลี่ย'})
-            by_branch['จำนวนยาง'] = by_branch['จำนวนยาง'].round(1)
-            by_branch['จำนวนเงิน'] = by_branch['จำนวนเงิน'].round(0)
-            by_branch['ราคาเฉลี่ย'] = by_branch['ราคาเฉลี่ย'].round(2)
-            st.dataframe(by_branch, use_container_width=True, height=200)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        # Additional Analysis
-        st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #2C3E50; font-size: 1.1rem; margin-bottom: 1rem;">📈 การวิเคราะห์เพิ่มเติม</h3>', unsafe_allow_html=True)
-        
-        col_analysis1, col_analysis2, col_analysis3 = st.columns(3)
-        
-        with col_analysis1:
-            top_customer = df_filtered.nlargest(1, 'จำนวนยาง')
-            if not top_customer.empty:
+            
+            # Individual employee list
+            st.markdown("<div style='margin-top: 1rem;'>", unsafe_allow_html=True)
+            for _, employee in emp_df.iterrows():
+                name = employee['ชื่อพนักงาน']
+                status = employee['สถานะ']
+                time_str = employee.get('เวลา', '')
+                
+                # Determine status display and styling
+                if status == 'มาทำงาน':
+                    icon = "🟢"
+                    status_text = f"มาทำงาน {time_str}"
+                    border_color = "#10b981"
+                elif status == 'มาสาย':
+                    icon = "🟡"
+                    status_text = f"มาสาย {time_str}"
+                    border_color = "#f59e0b"
+                elif status == 'ลา':
+                    icon = "🟣"
+                    status_text = "ลางาน"
+                    border_color = "#8b5cf6"
+                else:
+                    icon = "🔴"
+                    status_text = "ขาดงาน"
+                    border_color = "#ef4444"
+                
                 st.markdown(f"""
-                <div style='background: #E8F5E9; padding: 1rem; border-radius: 8px; border: 1px solid #C8E6C9;'>
-                    <h4 style='color: #2E7D32; margin: 0; font-size: 0.9rem;'>🏆 ลูกค้ายอดสูงสุด</h4>
-                    <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #1B5E20;'>{top_customer.iloc[0]['ชื่อลูกค้า']}</p>
-                    <p style='margin: 0; color: #388E3C; font-size: 0.85rem;'>{top_customer.iloc[0]['จำนวนยาง']:,.1f} กก.</p>
+                <div class="employee-item" style="border-left-color: {border_color};">
+                    <div class="employee-name">{icon} {name}</div>
+                    <div class="employee-status">{status_text}</div>
                 </div>
                 """, unsafe_allow_html=True)
-        
-        with col_analysis2:
-            price_range = df_filtered['ราคา'].max() - df_filtered['ราคา'].min()
-            st.markdown(f"""
-            <div style='background: #E3F2FD; padding: 1rem; border-radius: 8px; border: 1px solid #BBDEFB;'>
-                <h4 style='color: #1565C0; margin: 0; font-size: 0.9rem;'>📊 ช่วงราคา</h4>
-                <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #0D47A1;'>฿{df_filtered['ราคา'].min():.2f} - ฿{df_filtered['ราคา'].max():.2f}</p>
-                <p style='margin: 0; color: #1976D2; font-size: 0.85rem;'>ต่างกัน ฿{price_range:.2f}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col_analysis3:
-            total_branches = df_filtered['สาขา'].nunique()
-            total_groups = df_filtered['กอง'].nunique()
-            st.markdown(f"""
-            <div style='background: #F3E5F5; padding: 1rem; border-radius: 8px; border: 1px solid #E1BEE7;'>
-                <h4 style='color: #6A1B9A; margin: 0; font-size: 0.9rem;'>🏢 ความครอบคลุม</h4>
-                <p style='margin: 0.5rem 0 0 0; font-weight: 600; color: #4A148C;'>{total_branches} สาขา</p>
-                <p style='margin: 0; color: #7B1FA2; font-size: 0.85rem;'>{total_groups} กอง</p>
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+        else:
+            st.markdown("""
+            <div class="employee-item" style="border-left-color: #ef4444;">
+                <div class="employee-name">⚠️ ไม่สามารถดึงข้อมูลได้</div>
+                <div class="employee-status">กรุณาลองใหม่อีกครั้ง</div>
             </div>
             """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================================================
-# TAB 3: Detailed List
+# CHART FUNCTIONS
 # ========================================================================================
-with tab3:
+
+def create_bar_chart(data: pd.DataFrame, x_col: str, y_col: str, title: str) -> go.Figure:
+    """Create enhanced bar chart"""
+    fig = px.bar(
+        data, 
+        x=x_col, 
+        y=y_col,
+        text=y_col,
+        color_discrete_sequence=['#667eea', '#764ba2', '#f093fb', '#f5576c']
+    )
+    
+    fig.update_traces(
+        texttemplate='%{text:,.0f}',
+        textposition='outside',
+        textfont=dict(size=12, color='#2c3e50', family='Prompt'),
+        hovertemplate=f'<b>%{{x}}</b><br>{y_col}: %{{y:,.0f}}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        title=dict(
+            text=title,
+            font=dict(size=16, color='#2c3e50', family='Prompt'),
+            x=0.5
+        ),
+        height=350,
+        margin=dict(l=20, r=20, t=50, b=20),
+        plot_bgcolor='rgba(255,255,255,0)',
+        paper_bgcolor='rgba(255,255,255,0)',
+        font=dict(family="Prompt", color='#2c3e50'),
+        showlegend=False,
+        xaxis=dict(
+            title="",
+            showgrid=False,
+            tickfont=dict(size=11)
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=True,
+            gridcolor='rgba(102, 126, 234, 0.1)',
+            tickfont=dict(size=11)
+        )
+    )
+    
+    return fig
+
+def create_pie_chart(data: pd.DataFrame, values_col: str, names_col: str, title: str) -> go.Figure:
+    """Create enhanced pie chart"""
+    fig = px.pie(
+        data, 
+        values=values_col, 
+        names=names_col,
+        hole=0.5,
+        color_discrete_sequence=['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4ecdc4']
+    )
+    
+    fig.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        textfont=dict(size=11, color='white', family='Prompt'),
+        hovertemplate='<b>%{label}</b><br>จำนวน: %{value:,.0f}<br>สัดส่วน: %{percent}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        title=dict(
+            text=title,
+            font=dict(size=16, color='#2c3e50', family='Prompt'),
+            x=0.5
+        ),
+        height=350,
+        margin=dict(l=20, r=20, t=50, b=20),
+        plot_bgcolor='rgba(255,255,255,0)',
+        paper_bgcolor='rgba(255,255,255,0)',
+        font=dict(family="Prompt", color='#2c3e50'),
+        showlegend=False
+    )
+    
+    return fig
+
+def create_line_chart(data: pd.DataFrame, x_col: str, y_col: str, title: str) -> go.Figure:
+    """Create enhanced line chart for trends"""
+    fig = px.line(
+        data,
+        x=x_col,
+        y=y_col,
+        markers=True,
+        color_discrete_sequence=['#667eea']
+    )
+    
+    fig.update_traces(
+        line=dict(width=3),
+        marker=dict(size=8, color='#764ba2'),
+        hovertemplate=f'<b>%{{x}}</b><br>{y_col}: %{{y:,.0f}}<extra></extra>'
+    )
+    
+    fig.update_layout(
+        title=dict(
+            text=title,
+            font=dict(size=16, color='#2c3e50', family='Prompt'),
+            x=0.5
+        ),
+        height=350,
+        margin=dict(l=20, r=20, t=50, b=20),
+        plot_bgcolor='rgba(255,255,255,0)',
+        paper_bgcolor='rgba(255,255,255,0)',
+        font=dict(family="Prompt", color='#2c3e50'),
+        showlegend=False,
+        xaxis=dict(
+            title="",
+            showgrid=False,
+            tickfont=dict(size=11)
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=True,
+            gridcolor='rgba(102, 126, 234, 0.1)',
+            tickfont=dict(size=11)
+        )
+    )
+    
+    return fig
+
+# ========================================================================================
+# MAIN CONTENT FUNCTIONS
+# ========================================================================================
+
+def render_empty_state(message: str = "ไม่มีข้อมูล", description: str = "ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก"):
+    """Render beautiful empty state"""
+    st.markdown(f"""
+    <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <h3>{message}</h3>
+        <p>{description}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_overview_tab(df_filtered: pd.DataFrame):
+    """Render enhanced overview tab"""
     if df_filtered.empty:
-        st.markdown("""
-        <div class="empty-state">
-            <h3>⚠️ ไม่มีข้อมูล</h3>
-            <p>ไม่มีข้อมูลในวันที่ สาขา หรือกองที่เลือก</p>
+        render_empty_state()
+        return
+    
+    # Key Metrics Row
+    col1, col2, col3, col4 = st.columns(4)
+    
+    total_rubber = df_filtered['จำนวนยาง'].sum()
+    total_revenue = df_filtered['จำนวนเงิน'].sum()
+    total_customers = df_filtered['ชื่อลูกค้า'].count()
+    avg_price = df_filtered['ราคา'].mean()
+    
+    with col1:
+        st.markdown(create_metric_card("⚖️", format_number(total_rubber, 1), "กิโลกรัม", "#667eea"), unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(create_metric_card("💰", f"฿{format_number(total_revenue)}", "รายได้รวม", "#10b981"), unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(create_metric_card("👥", format_number(total_customers), "ลูกค้าทั้งหมด", "#f59e0b"), unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(create_metric_card("📊", f"฿{format_number(avg_price, 2)}", "ราคาเฉลี่ย", "#8b5cf6"), unsafe_allow_html=True)
+
+    # Charts Row
+    col_chart1, col_chart2 = st.columns(2)
+    
+    with col_chart1:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
+        if not bar_data.empty:
+            fig_bar = create_bar_chart(bar_data, 'สาขา', 'จำนวนยาง', "📊 จำนวนยางตามสาขา (กก.)")
+            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col_chart2:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        pie_data = df_filtered.groupby('สาขา')['จำนวนเงิน'].sum().reset_index()
+        if not pie_data.empty:
+            fig_pie = create_pie_chart(pie_data, 'จำนวนเงิน', 'สาขา', "💰 สัดส่วนรายได้ตามสาขา")
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Additional insights
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<div class="chart-title">🔍 ข้อมูลเชิงลึก</div>', unsafe_allow_html=True)
+    
+    col_insight1, col_insight2, col_insight3 = st.columns(3)
+    
+    with col_insight1:
+        if not df_filtered.empty:
+            top_customer = df_filtered.nlargest(1, 'จำนวนยาง')
+            if not top_customer.empty:
+                customer_name = top_customer.iloc[0]['ชื่อลูกค้า']
+                customer_amount = top_customer.iloc[0]['จำนวนยาง']
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, #10b981, #059669); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;'>
+                    <h4 style='margin: 0 0 0.5rem 0; color: white;'>🏆 ลูกค้ายอดสูงสุด</h4>
+                    <p style='margin: 0; font-weight: 600; font-size: 1.1rem;'>{customer_name}</p>
+                    <p style='margin: 0.3rem 0 0 0; opacity: 0.9;'>{format_number(customer_amount, 1)} กก.</p>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    with col_insight2:
+        price_range = df_filtered['ราคา'].max() - df_filtered['ราคา'].min()
+        price_min = df_filtered['ราคา'].min()
+        price_max = df_filtered['ราคา'].max()
+        st.markdown(f"""
+        <div style='background: linear-gradient(135deg, #667eea, #764ba2); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;'>
+            <h4 style='margin: 0 0 0.5rem 0; color: white;'>📈 ช่วงราคา</h4>
+            <p style='margin: 0; font-weight: 600; font-size: 1.1rem;'>฿{format_number(price_min, 2)} - ฿{format_number(price_max, 2)}</p>
+            <p style='margin: 0.3rem 0 0 0; opacity: 0.9;'>ต่างกัน ฿{format_number(price_range, 2)}</p>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="search-container">', unsafe_allow_html=True)
-        st.markdown('<h3>📋 รายการลูกค้าทั้งหมด</h3>', unsafe_allow_html=True)
+    
+    with col_insight3:
+        total_branches = df_filtered['สาขา'].nunique()
+        total_groups = df_filtered['กอง'].nunique()
+        st.markdown(f"""
+        <div style='background: linear-gradient(135deg, #f093fb, #f5576c); padding: 1.5rem; border-radius: 12px; color: white; text-align: center;'>
+            <h4 style='margin: 0 0 0.5rem 0; color: white;'>🏢 ความครอบคลุม</h4>
+            <p style='margin: 0; font-weight: 600; font-size: 1.1rem;'>{total_branches} สาขา</p>
+            <p style='margin: 0.3rem 0 0 0; opacity: 0.9;'>{total_groups} กอง</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def render_summary_tab(df_filtered: pd.DataFrame):
+    """Render enhanced summary tab"""
+    if df_filtered.empty:
+        render_empty_state()
+        return
+    
+    col_summary1, col_summary2 = st.columns(2)
+    
+    with col_summary1:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">📦 สรุปข้อมูลตามกอง</div>', unsafe_allow_html=True)
         
-        col_search1, col_search2 = st.columns([3, 1])
-        with col_search1:
-            keyword = st.text_input("🔍 ค้นหาชื่อลูกค้า", placeholder="กรอกชื่อลูกค้าที่ต้องการค้นหา...", label_visibility="collapsed")
-        with col_search2:
-            sort_by = st.selectbox("เรียงตาม", ["จำนวนยาง", "จำนวนเงิน", "ชื่อลูกค้า"], label_visibility="collapsed")
+        by_group = df_filtered.groupby('กอง').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count',
+            'ราคา': 'mean'
+        }).reset_index()
         
+        by_group = by_group.rename(columns={
+            'ชื่อลูกค้า': 'จำนวนลูกค้า',
+            'ราคา': 'ราคาเฉลี่ย'
+        })
+        
+        # Format columns for display
+        by_group['จำนวนยาง'] = by_group['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
+        by_group['จำนวนเงิน'] = by_group['จำนวนเงิน'].apply(lambda x: f"฿{x:,.0f}")
+        by_group['ราคาเฉลี่ย'] = by_group['ราคาเฉลี่ย'].apply(lambda x: f"฿{x:,.2f}")
+        
+        st.dataframe(by_group, use_container_width=True, height=300)
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Filter and sort data
-        if keyword:
-            result_df = df_filtered[df_filtered['ชื่อลูกค้า'].str.contains(keyword, case=False, na=False)]
-        else:
-            result_df = df_filtered
-        
-        # Sort data
-        if sort_by == "จำนวนยาง":
-            result_df = result_df.sort_values('จำนวนยาง', ascending=False)
-        elif sort_by == "จำนวนเงิน":
-            result_df = result_df.sort_values('จำนวนเงิน', ascending=False)
-        else:
-            result_df = result_df.sort_values('ชื่อลูกค้า')
 
-        if result_df.empty:
-            st.markdown("""
-            <div class="empty-state">
-                <h4>🔍 ไม่พบข้อมูล</h4>
-                <p>ไม่พบข้อมูลลูกค้าที่ค้นหา</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            # Display summary
-            st.markdown(f"""
-            <div style='background: #F5F5F5; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;'>
-                <span style='color: #2C3E50; font-weight: 500;'>พบข้อมูล {len(result_df)} รายการ</span>
-                <span style='color: #666; font-size: 0.9rem;'>รวม {result_df['จำนวนยาง'].sum():,.1f} กก. | ฿{result_df['จำนวนเงิน'].sum():,.0f}</span>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Prepare display dataframe
-            result_df = result_df.reset_index(drop=True)
-            display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']].copy()
-            
-            # Format numbers
-            display_df['จำนวนยาง'] = display_df['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
-            display_df['ราคา'] = display_df['ราคา'].apply(lambda x: f"{x:,.2f}")
-            display_df['จำนวนเงิน'] = display_df['จำนวนเงิน'].apply(lambda x: f"{x:,.0f}")
-            
-            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-            st.dataframe(display_df, use_container_width=True, height=400)
-            st.markdown('</div>', unsafe_allow_html=True)
+    with col_summary2:
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+        st.markdown('<div class="chart-title">🏢 สรุปข้อมูลตามสาขา</div>', unsafe_allow_html=True)
+        
+        by_branch = df_filtered.groupby('สาขา').agg({
+            'จำนวนยาง': 'sum', 
+            'จำนวนเงิน': 'sum', 
+            'ชื่อลูกค้า': 'count', 
+            'ราคา': 'mean'
+        }).reset_index()
+        
+        by_branch = by_branch.rename(columns={
+            'ชื่อลูกค้า': 'จำนวนลูกค้า',
+            'ราคา': 'ราคาเฉลี่ย'
+        })
+        
+        # Format columns for display
+        by_branch['จำนวนยาง'] = by_branch['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
+        by_branch['จำนวนเงิน'] = by_branch['จำนวนเงิน'].apply(lambda x: f"฿{x:,.0f}")
+        by_branch['ราคาเฉลี่ย'] = by_branch['ราคาเฉลี่ย'].apply(lambda x: f"฿{x:,.2f}")
+        
+        st.dataframe(by_branch, use_container_width=True, height=300)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-            # Download button
-            csv = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']].to_csv(index=False).encode('utf-8-sig')
+    # Performance Analysis
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<div class="chart-title">📈 การวิเคราะห์ประสิทธิภาพ</div>', unsafe_allow_html=True)
+    
+    # Top customers table
+    st.subheader("🏆 ลูกค้าชั้นนำ (Top 10)")
+    top_customers = df_filtered.nlargest(10, 'จำนวนยาง')[['ชื่อลูกค้า', 'สาขา', 'กอง', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']].copy()
+    
+    # Format for display
+    top_customers['จำนวนยาง'] = top_customers['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
+    top_customers['ราคา'] = top_customers['ราคา'].apply(lambda x: f"฿{x:,.2f}")
+    top_customers['จำนวนเงิน'] = top_customers['จำนวนเงิน'].apply(lambda x: f"฿{x:,.0f}")
+    
+    st.dataframe(top_customers, use_container_width=True, height=300)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def render_details_tab(df_filtered: pd.DataFrame):
+    """Render enhanced details tab with search and filtering"""
+    if df_filtered.empty:
+        render_empty_state()
+        return
+    
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.markdown('<div class="chart-title">📋 รายการลูกค้าทั้งหมด</div>', unsafe_allow_html=True)
+    
+    # Search and filter controls
+    col_search1, col_search2, col_search3 = st.columns([2, 1, 1])
+    
+    with col_search1:
+        search_keyword = st.text_input(
+            "🔍 ค้นหาชื่อลูกค้า", 
+            placeholder="กรอกชื่อลูกค้าที่ต้องการค้นหา...",
+            help="ค้นหาจากชื่อลูกค้า"
+        )
+    
+    with col_search2:
+        sort_options = {
+            "จำนวนยาง": "จำนวนยาง (มาก-น้อย)",
+            "จำนวนเงิน": "จำนวนเงิน (มาก-น้อย)", 
+            "ชื่อลูกค้า": "ชื่อลูกค้า (A-Z)",
+            "ราคา": "ราคา (มาก-น้อย)"
+        }
+        sort_by = st.selectbox("📊 เรียงตาม", options=list(sort_options.keys()), format_func=lambda x: sort_options[x])
+    
+    with col_search3:
+        min_amount = st.number_input(
+            "จำนวนยางขั้นต่ำ (กก.)", 
+            min_value=0.0, 
+            value=0.0, 
+            step=10.0,
+            help="กรองข้อมูลตามจำนวนยางขั้นต่ำ"
+        )
+    
+    # Filter data based on search criteria
+    result_df = df_filtered.copy()
+    
+    if search_keyword:
+        result_df = result_df[result_df['ชื่อลูกค้า'].str.contains(search_keyword, case=False, na=False)]
+    
+    if min_amount > 0:
+        result_df = result_df[result_df['จำนวนยาง'] >= min_amount]
+    
+    # Sort data
+    if sort_by in ["จำนวนยาง", "จำนวนเงิน", "ราคา"]:
+        result_df = result_df.sort_values(sort_by, ascending=False)
+    else:
+        result_df = result_df.sort_values(sort_by)
+
+    if result_df.empty:
+        render_empty_state("🔍 ไม่พบข้อมูล", "ไม่พบข้อมูลลูกค้าตามเงื่อนไขที่ค้นหา")
+    else:
+        # Display summary stats
+        total_found = len(result_df)
+        total_rubber_found = result_df['จำนวนยาง'].sum()
+        total_revenue_found = result_df['จำนวนเงิน'].sum()
+        
+        st.markdown(f"""
+        <div style='background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem;'>
+            <div style='display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; text-align: center;'>
+                <div>
+                    <div style='font-size: 1.5rem; font-weight: 700;'>{format_number(total_found)}</div>
+                    <div style='opacity: 0.9;'>รายการ</div>
+                </div>
+                <div>
+                    <div style='font-size: 1.5rem; font-weight: 700;'>{format_number(total_rubber_found, 1)}</div>
+                    <div style='opacity: 0.9;'>กิโลกรัม</div>
+                </div>
+                <div>
+                    <div style='font-size: 1.5rem; font-weight: 700;'>฿{format_number(total_revenue_found)}</div>
+                    <div style='opacity: 0.9;'>รายได้รวม</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Prepare display dataframe
+        display_df = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน']].copy()
+        
+        # Format numbers for display
+        display_df['จำนวนยาง'] = display_df['จำนวนยาง'].apply(lambda x: f"{x:,.1f}")
+        display_df['ราคา'] = display_df['ราคา'].apply(lambda x: f"฿{x:,.2f}")
+        display_df['จำนวนเงิน'] = display_df['จำนวนเงิน'].apply(lambda x: f"฿{x:,.0f}")
+        
+        # Display data table
+        st.dataframe(
+            display_df, 
+            use_container_width=True, 
+            height=500,
+            column_config={
+                "สาขา": st.column_config.TextColumn("🏢 สาขา", width="small"),
+                "กอง": st.column_config.TextColumn("📦 กอง", width="small"),
+                "ชื่อลูกค้า": st.column_config.TextColumn("👤 ชื่อลูกค้า", width="medium"),
+                "จำนวนยาง": st.column_config.TextColumn("⚖️ จำนวนยาง (กก.)", width="small"),
+                "ราคา": st.column_config.TextColumn("💰 ราคา", width="small"),
+                "จำนวนเงิน": st.column_config.TextColumn("💵 จำนวนเงิน", width="small")
+            }
+        )
+
+        # Download functionality
+        col_download1, col_download2 = st.columns(2)
+        
+        with col_download1:
+            # CSV download
+            csv_data = result_df[['สาขา', 'กอง', 'ชื่อลูกค้า', 'จำนวนยาง', 'ราคา', 'จำนวนเงิน', 'วันที่']].copy()
+            csv_data['วันที่'] = csv_data['วันที่'].dt.strftime('%d/%m/%Y')
+            csv = csv_data.to_csv(index=False).encode('utf-8-sig')
+            
             st.download_button(
-                "📥 ดาวน์โหลดข้อมูล (CSV)", 
+                "📥 ดาวน์โหลด CSV", 
                 csv, 
                 f"rubber_data_{st.session_state.selected_date.strftime('%Y%m%d')}.csv", 
-                "text/csv", 
-                use_container_width=True
+                "text/csv",
+                use_container_width=True,
+                help="ดาวน์โหลดข้อมูลในรูปแบบ CSV"
             )
+        
+        with col_download2:
+            # Excel download (if needed)
+            import io
+            from io import BytesIO
+            
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                csv_data.to_excel(writer, sheet_name='RubberData', index=False)
+            excel_data = output.getvalue()
+            
+            st.download_button(
+                "📊 ดาวน์โหลด Excel",
+                excel_data,
+                f"rubber_data_{st.session_state.selected_date.strftime('%Y%m%d')}.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                help="ดาวน์โหลดข้อมูลในรูปแบบ Excel"
+            )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ========================================================================================
-# FOOTER
+# MAIN APPLICATION
 # ========================================================================================
-st.markdown(f"""
-<div class="footer">
-    <p>🌳 ลิตาการยาง Dashboard © 2025 | อัปเดตล่าสุด: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}</p>
-    <p>Developed with Strategic Excellence for Operational Efficiency</p>
-</div>
-""", unsafe_allow_html=True)
+
+def main():
+    """Main application function"""
+    
+    # Render header
+    st.markdown("""
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">🌳 ลิตาการยาง Dashboard</h1>
+        <p class="dashboard-subtitle">ระบบจัดการข้อมูลยางพาราแบบเรียลไทม์ | Real-time Rubber Management System</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Render sidebar
+    render_sidebar()
+    
+    # Load and filter data
+    df = load_rubber_data()
+    
+    if not df.empty and st.session_state.selected_branches and st.session_state.selected_groups:
+        df_filtered = filter_dataframe(
+            df, 
+            st.session_state.selected_date, 
+            st.session_state.selected_branches, 
+            st.session_state.selected_groups
+        )
+    else:
+        df_filtered = pd.DataFrame()
+    
+    # Main content tabs
+    tab1, tab2, tab3 = st.tabs(["📊 ภาพรวม", "📋 สรุปข้อมูล", "📁 รายการละเอียด"])
+    
+    with tab1:
+        render_overview_tab(df_filtered)
+    
+    with tab2:
+        render_summary_tab(df_filtered)
+    
+    with tab3:
+        render_details_tab(df_filtered)
+    
+    # Footer
+    st.markdown(f"""
+    <div style='
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 2rem;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    '>
+        <p style='margin: 0; font-weight: 500;'>
+            🌳 ลิตาการยาง Dashboard © 2025 | 
+            อัปเดตล่าสุด: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")} | 
+            Built with ❤️ using Streamlit
+        </p>
+        <p style='margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;'>
+            Developed for Operational Excellence & Strategic Decision Making
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ========================================================================================
+# RUN APPLICATION
+# ========================================================================================
+
+if __name__ == "__main__":
+    main()
