@@ -120,20 +120,17 @@ st.markdown("""
   }
 
   /* Compact Metric Cards */
-.metric-card-compact {
-  background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-  border: 1px solid #FFE0EC;
-  border-radius: 12px;
-  padding: 0.8rem;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-  height: auto;
-  max-width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
+  .metric-card-compact {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
+    border: 1px solid #FFE0EC;
+    border-radius: 12px;
+    padding: 0.8rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+    height: 90px;
+  }
 
   .metric-card-compact:hover {
     transform: translateY(-2px);
@@ -145,19 +142,19 @@ st.markdown("""
     margin-bottom: 0.2rem;
   }
 
-.metric-value-small {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #E91E63;
-  line-height: 1.2;
-}
+  .metric-value-small {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #E91E63;
+    line-height: 1.2;
+  }
 
-.metric-label-small {
-  font-size: 0.7rem;
-  color: #2C3E50;
-  font-weight: 500;
-  margin-top: 0.2rem;
-}
+  .metric-label-small {
+    font-size: 0.75rem;
+    color: #2C3E50;
+    font-weight: 500;
+    margin-top: 0.2rem;
+  }
 
   /* Compact Chart Container */
   .chart-container-compact {
@@ -263,48 +260,26 @@ st.markdown("""
     margin-bottom: 0.8rem !important;
   }
 
-/* Input & Selectbox Fix */
-.stTextInput > div > div > input,
-.stDateInput > div > div > input {
-  border: 1px solid #FFE0EC !important;
-  border-radius: 8px !important;
-  background: #FFF9FC !important;
-  padding: 0.5rem !important;
-  color: #2C3E50 !important;
-  font-weight: 500 !important;
-  font-size: 0.95rem !important;
-}
-
-/* Selectbox Fix */
-div[data-baseweb="select"] {
-  background-color: #FFF9FC !important;
-  border: 1px solid #FFE0EC !important;
-  border-radius: 8px !important;
-  color: #2C3E50 !important;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-/* Placeholder text in selectbox */
-.css-1wa3eu0-placeholder,
-div[data-baseweb="select"] .css-1wa3eu0 {
-  color: #A0A0A0 !important;
-  opacity: 1 !important;
-  font-weight: 400;
-  font-size: 0.9rem;
-}
-
-/* Selected text in selectbox */
-div[data-baseweb="select"] > div > div {
-  color: #2C3E50 !important;
-}
-
-/* Dropdown options */
-div[data-baseweb="popover"] div[role="option"] {
-  color: #2C3E50 !important;
-  background-color: #FFFFFF !important;
-  font-weight: 500;
-}
+  /* Input Fields */
+  .stTextInput > div > div > input,
+  .stSelectbox > div > div > select,
+  .stMultiSelect > div > div > div,
+  .stDateInput > div > div > input {
+    border: 1px solid #FFE0EC !important;
+    border-radius: 8px !important;
+    background: #FFF9FC !important;
+    padding: 0.5rem !important;
+    color: #2C3E50 !important;
+    font-weight: 500 !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .stTextInput > div > div > input:focus,
+  .stSelectbox > div > div > select:focus,
+  .stDateInput > div > div > input:focus {
+    border-color: #FF69B4 !important;
+    box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.2) !important;
+  }
   
   /* Labels */
   .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDateInput label {
@@ -458,35 +433,6 @@ div[data-baseweb="popover"] div[role="option"] {
     .metric-label-small {
       font-size: 0.7rem;
     }
-
-    /* Fix visibility of dropdown and input text */
-.stSelectbox div[data-baseweb="select"] > div {
-  color: #2C3E50 !important;         /* สีข้อความ dropdown */
-  background-color: #FFF9FC !important;  /* พื้นหลัง dropdown */
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-/* Fix placeholder text visibility */
-.css-1wa3eu0-placeholder,
-div[data-baseweb="select"] .css-1wa3eu0 {
-  color: #7B7B7B !important;        /* เปลี่ยน placeholder ให้เห็น */
-  opacity: 1 !important;
-  font-weight: 500;
-}
-
-/* Selected item */
-div[data-baseweb="select"] > div > div {
-  color: #2C3E50 !important;
-}
-
-/* Dropdown menu options */
-div[data-baseweb="popover"] div[role="option"] {
-  color: #2C3E50 !important;
-  background-color: #FFFFFF !important;
-  font-weight: 500;
-}
-
   }
 </style>
 """, unsafe_allow_html=True)
@@ -721,44 +667,40 @@ with tab1:
         # Charts in same row
         col_chart1, col_chart2 = st.columns(2)
         
-with col_chart1:
-    st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
-
-    bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
-    if not bar_data.empty:
-        fig_bar = px.bar(
-            bar_data, 
-            x='สาขา', 
-            y='จำนวนยาง',
-            text='จำนวนยาง',
-            color_discrete_sequence=['#FFB6C1']
-        )
-        fig_bar.update_traces(
-            texttemplate='%{text:.0f}',
-            textposition='inside',
-            textfont=dict(color='#2C3E50', size=12)
-        )
-        fig_bar.update_layout(
-            height=320,
-            margin=dict(l=20, r=20, t=40, b=40),
-            title="จำนวนยางตามสาขา (กก.)",
-            title_font_size=14,
-            title_font_color='#2C3E50',
-            font_family="Prompt",
-            plot_bgcolor='rgba(255,255,255,0)',
-            paper_bgcolor='rgba(255,255,255,0)',
-            font_color='#2C3E50',
-            showlegend=False,
-            xaxis_title="",
-            yaxis_title=""
-        )
-        fig_bar.update_xaxes(tickfont=dict(color='#2C3E50', size=11))
-        fig_bar.update_yaxes(tickfont=dict(color='#2C3E50', size=11), gridcolor='rgba(255,224,236,0.5)')
-
-        st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
+        with col_chart1:
+            st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
+            bar_data = df_filtered.groupby('สาขา')['จำนวนยาง'].sum().reset_index()
+            if not bar_data.empty:
+                fig_bar = px.bar(
+                    bar_data, 
+                    x='สาขา', 
+                    y='จำนวนยาง',
+                    text='จำนวนยาง',
+                    color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
+                )
+                fig_bar.update_traces(
+                    texttemplate='%{text:.0f}',
+                    textposition='outside',
+                    textfont_size=11
+                )
+                fig_bar.update_layout(
+                    height=300,
+                    margin=dict(l=0, r=0, t=30, b=0),
+                    title="จำนวนยางตามสาขา (กก.)",
+                    title_font_size=14,
+                    title_font_color='#2C3E50',
+                    font_family="Prompt",
+                    plot_bgcolor='rgba(255,255,255,0)',
+                    paper_bgcolor='rgba(255,255,255,0)',
+                    font_color='#2C3E50',
+                    showlegend=False,
+                    xaxis_title="",
+                    yaxis_title=""
+                )
+                fig_bar.update_xaxes(showgrid=False)
+                fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
+                st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+            st.markdown('</div>', unsafe_allow_html=True)
         
         with col_chart2:
             st.markdown('<div class="chart-container-compact">', unsafe_allow_html=True)
