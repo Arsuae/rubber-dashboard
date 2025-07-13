@@ -684,7 +684,7 @@ with tab1:
                 fig_bar.update_traces(
     texttemplate='%{text:.0f}',
     textposition='inside',
-    textfont=dict(color='white', size=12)
+    textfont=dict(color='#2C3E50', size=12)
 )
                 fig_bar.update_layout(
                     height=300,
