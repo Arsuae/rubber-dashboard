@@ -120,17 +120,20 @@ st.markdown("""
   }
 
   /* Compact Metric Cards */
-  .metric-card-compact {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
-    border: 1px solid #FFE0EC;
-    border-radius: 12px;
-    padding: 0.8rem;
-    text-align: center;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
-    height: 90px;
-  }
+.metric-card-compact {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F5 100%);
+  border: 1px solid #FFE0EC;
+  border-radius: 12px;
+  padding: 0.8rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 182, 193, 0.1);
+  height: auto;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 
   .metric-card-compact:hover {
     transform: translateY(-2px);
