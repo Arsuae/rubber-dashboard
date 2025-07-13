@@ -644,7 +644,7 @@ with tab1:
             <div class="metric-card-compact">
                 <div class="metric-icon-small">💰</div>
                 <div class="metric-value-small">฿{df_filtered['จำนวนเงิน'].sum():,.0f}</div>
-                <div class="metric-label-small">รายได้รวม</div>
+                <div class="metric-label-small">จำนวนเงินรวม</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -725,7 +725,7 @@ with tab1:
                 fig_pie.update_layout(
                     height=300,
                     margin=dict(l=0, r=0, t=30, b=0),
-                    title="สัดส่วนรายได้ตามสาขา",
+                    title="สัดส่วนจำนวนเงินตามสาขา",
                     title_font_size=14,
                     title_font_color='#2C3E50',
                     font_family="Prompt",
