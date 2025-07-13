@@ -678,25 +678,25 @@ with tab1:
                     text='จำนวนยาง',
                     color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
                 )
-  fig_bar.update_traces(
-    texttemplate='%{text:.0f}',
-    textposition='inside',  # เดิมเป็น 'outside'
-    textfont=dict(color='white', size=12)  # ทำให้ตัวเลขมองเห็นในแท่งสีชมพู
-)
-fig_bar.update_layout(
-    height=320,
-    margin=dict(l=20, r=20, t=40, b=40),  # เพิ่มขอบกันล้น
-    title="จำนวนยางตามสาขา (กก.)",
-    title_font_size=14,
-    title_font_color='#2C3E50',
-    font_family="Prompt",
-    plot_bgcolor='rgba(255,255,255,0)',
-    paper_bgcolor='rgba(255,255,255,0)',
-    font_color='#2C3E50',
-    showlegend=False,
-    xaxis_title="",
-    yaxis_title=""
-)
+                fig_bar.update_traces(
+                    texttemplate='%{text:.0f}',
+                    textposition='outside',
+                    textfont_size=11
+                )
+                fig_bar.update_layout(
+                    height=300,
+                    margin=dict(l=0, r=0, t=30, b=0),
+                    title="จำนวนยางตามสาขา (กก.)",
+                    title_font_size=14,
+                    title_font_color='#2C3E50',
+                    font_family="Prompt",
+                    plot_bgcolor='rgba(255,255,255,0)',
+                    paper_bgcolor='rgba(255,255,255,0)',
+                    font_color='#2C3E50',
+                    showlegend=False,
+                    xaxis_title="",
+                    yaxis_title=""
+                )
                 fig_bar.update_xaxes(showgrid=False)
                 fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
