@@ -682,10 +682,10 @@ with tab1:
                     color_discrete_sequence=['#FFB6C1', '#DDA0DD', '#E1BEE7', '#F8BBD0']
                 )
                 fig_bar.update_traces(
-                    texttemplate='%{text:.0f}',
-                    textposition='outside',
-                    textfont_size=11
-                )
+    texttemplate='%{text:.0f}',
+    textposition='inside',
+    textfont=dict(color='white', size=12)
+)
                 fig_bar.update_layout(
                     height=300,
                     margin=dict(l=0, r=0, t=30, b=0),
