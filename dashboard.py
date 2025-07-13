@@ -305,14 +305,6 @@ div[data-baseweb="popover"] div[role="option"] {
   background-color: #FFFFFF !important;
   font-weight: 500;
 }
-
-  
-  .stTextInput > div > div > input:focus,
-  .stSelectbox > div > div > select:focus,
-  .stDateInput > div > div > input:focus {
-    border-color: #FF69B4 !important;
-    box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.2) !important;
-  }
   
   /* Labels */
   .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDateInput label {
