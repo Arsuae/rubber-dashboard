@@ -735,7 +735,7 @@ with tab1:
                 fig_bar.update_traces(
     texttemplate='%{text:.0f}',
     textposition='inside',  # เดิมเป็น 'outside'
-    textfont=dict(color='white', size=12)  # ทำให้ตัวเลขมองเห็นในแท่งสีชมพู
+    textfont=dict(color='#2C3E50', size=12)  # ทำให้ตัวเลขมองเห็นในแท่งสีชมพู
 )
                 fig_bar.update_layout(
     height=320,
