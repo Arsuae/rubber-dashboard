@@ -751,8 +751,29 @@ with tab1:
     xaxis_title="",
     yaxis_title=""
 )
-                fig_bar.update_xaxes(showgrid=False)
-                fig_bar.update_yaxes(showgrid=True, gridcolor='rgba(255,224,236,0.5)')
+fig_bar.update_traces(
+    texttemplate='%{text:.0f}',
+    textposition='inside',
+    textfont=dict(color='#2C3E50', size=12)
+)
+fig_bar.update_layout(
+    height=320,
+    margin=dict(l=20, r=20, t=40, b=40),
+    title="จำนวนยางตามสาขา (กก.)",
+    title_font_size=14,
+    title_font_color='#2C3E50',
+    font_family="Prompt",
+    plot_bgcolor='rgba(255,255,255,0)',
+    paper_bgcolor='rgba(255,255,255,0)',
+    font_color='#2C3E50',
+    showlegend=False,
+    xaxis_title="",
+    yaxis_title=""
+)
+fig_bar.update_xaxes(tickfont=dict(color='#2C3E50', size=11))
+fig_bar.update_yaxes(tickfont=dict(color='#2C3E50', size=11), gridcolor='rgba(255,224,236,0.5)')
+
+
                 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
         
