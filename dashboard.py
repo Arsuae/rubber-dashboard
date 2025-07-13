@@ -443,6 +443,35 @@ st.markdown("""
     .metric-label-small {
       font-size: 0.7rem;
     }
+
+    /* Fix visibility of dropdown and input text */
+.stSelectbox div[data-baseweb="select"] > div {
+  color: #2C3E50 !important;         /* สีข้อความ dropdown */
+  background-color: #FFF9FC !important;  /* พื้นหลัง dropdown */
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Fix placeholder text visibility */
+.css-1wa3eu0-placeholder,
+div[data-baseweb="select"] .css-1wa3eu0 {
+  color: #7B7B7B !important;        /* เปลี่ยน placeholder ให้เห็น */
+  opacity: 1 !important;
+  font-weight: 500;
+}
+
+/* Selected item */
+div[data-baseweb="select"] > div > div {
+  color: #2C3E50 !important;
+}
+
+/* Dropdown menu options */
+div[data-baseweb="popover"] div[role="option"] {
+  color: #2C3E50 !important;
+  background-color: #FFFFFF !important;
+  font-weight: 500;
+}
+
   }
 </style>
 """, unsafe_allow_html=True)
