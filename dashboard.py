@@ -263,26 +263,49 @@ st.markdown("""
     margin-bottom: 0.8rem !important;
   }
 
-/* Input Fields */
+/* Input & Selectbox Fix */
 .stTextInput > div > div > input,
-.stSelectbox > div > div > select,
-.stMultiSelect > div > div > div,
 .stDateInput > div > div > input {
   border: 1px solid #FFE0EC !important;
   border-radius: 8px !important;
   background: #FFF9FC !important;
   padding: 0.5rem !important;
-  color: #2C3E50 !important;  /* <-- ตัวอักษรเข้มชัดเจน */
-  font-weight: 600 !important;
+  color: #2C3E50 !important;
+  font-weight: 500 !important;
   font-size: 0.95rem !important;
 }
 
-/* Select Dropdown Options */
-.css-1wa3eu0-placeholder {
+/* Selectbox Fix */
+div[data-baseweb="select"] {
+  background-color: #FFF9FC !important;
+  border: 1px solid #FFE0EC !important;
+  border-radius: 8px !important;
   color: #2C3E50 !important;
-  opacity: 1 !important;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.95rem;
 }
+
+/* Placeholder text in selectbox */
+.css-1wa3eu0-placeholder,
+div[data-baseweb="select"] .css-1wa3eu0 {
+  color: #A0A0A0 !important;
+  opacity: 1 !important;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+/* Selected text in selectbox */
+div[data-baseweb="select"] > div > div {
+  color: #2C3E50 !important;
+}
+
+/* Dropdown options */
+div[data-baseweb="popover"] div[role="option"] {
+  color: #2C3E50 !important;
+  background-color: #FFFFFF !important;
+  font-weight: 500;
+}
+
   
   .stTextInput > div > div > input:focus,
   .stSelectbox > div > div > select:focus,
